@@ -114,6 +114,27 @@ class QuicLongHeader(Packet):
     def get_packet_number_length(self) -> int:
         return self.packet_number_length + 1
 
+    def without_payload(self) -> 'QuicLongHeader':
+        """
+        Clones the packet, removes the payload and returns the result.
+
+        :return: A copy of the packet without the payload.
+        :rtype: QuicLongHeader
+        """
+        pkt = self.copy()
+        pkt.remove_payload()
+        return pkt
+
+    def build_without_payload(self) -> bytes:
+        """
+        Clones the packet, removes the payload, builds the byte string and
+        returns the result.
+
+        :return: The bytes of the header fields without the payload.
+        :rtype: bytes
+        """
+        return self.without_payload().build()
+
 
 class Quic0Rtt(QuicLongHeader):
     """
