@@ -1,0 +1,76 @@
+% Tests for QUIC cryptography
+~ crypto
++ Test initial keys
+=
+from binascii import unhexlify
+from scapy.layers.quic.packets import QUIC_VERSION
+from scapy.layers.quic.crypto import \
+    LABEL_CLIENT, LABEL_SERVER, LABEL_AEAD_KEY, \
+    LABEL_IV, LABEL_HP, get_initial_salt, QuicHkdf
+
+# Values from QUIC-TLS draft - Appendix A.
+dcid = unhexlify("8394c8f03e515708")
+hkdf = QuicHkdf()
+
+= Test initial salt
+assert get_initial_salt(QUIC_VERSION) \
+    == unhexlify("afbfec289993d24c9e9786f19c6111e04390a899")
+
+= Test "client in" label
+assert QuicHkdf.label(LABEL_CLIENT, b"", 32) \
+    == unhexlify("00200f746c73313320636c69656e7420696e00")
+
+= Test "server in" label
+assert QuicHkdf.label(LABEL_SERVER, b"", 32) \
+    == unhexlify("00200f746c7331332073657276657220696e00")
+
+= Test "quic key" label
+assert QuicHkdf.label(LABEL_AEAD_KEY, b"", 16) \
+    == unhexlify("00100e746c7331332071756963206b657900")
+
+= Test "quic iv" label
+assert QuicHkdf.label(LABEL_IV, b"", 12) \
+    == unhexlify("000c0d746c733133207175696320697600")
+
+= Test "quic hp" label
+assert QuicHkdf.label(LABEL_HP, b"", 16) \
+    == unhexlify("00100d746c733133207175696320687000")
+
+= Test initial secret
+initial_secret = hkdf.get_initial_secret(QUIC_VERSION, dcid)
+assert initial_secret == unhexlify("1e7e7764529715b1e0ddc8e9753c6157"
+                                   "6769605187793ed366f8bbf8c9e986eb")
+
+= Test client initial secret
+client_initial_secret = hkdf.get_client_initial_secret(initial_secret)
+assert client_initial_secret == unhexlify("0088119288f1d866733ceeed15ff9d50"
+                                          "902cf82952eee27e9d4d4918ea371d87")
+
+= Test client key
+client_key = hkdf.compute_key(client_initial_secret)
+assert client_key == unhexlify("175257a31eb09dea9366d8bb79ad80ba")
+
+= Test client IV
+client_iv = hkdf.compute_iv(client_initial_secret)
+assert  client_iv == unhexlify("6b26114b9cba2b63a9e8dd4f")
+
+= Test client HP
+client_hp = hkdf.compute_hp(client_initial_secret)
+assert client_hp == unhexlify("9ddd12c994c0698b89374a9c077a3077")
+
+= Test server initial secret
+server_initial_secret = hkdf.get_server_initial_secret(initial_secret)
+assert server_initial_secret == unhexlify("006f881359244dd9ad1acf85f595bad6"
+                                          "7c13f9f5586f5e64e1acae1d9ea8f616")
+
+= Test server key
+server_key = hkdf.compute_key(server_initial_secret)
+assert server_key == unhexlify("149d0b1662ab871fbe63c49b5e655a5d")
+
+= Test server IV
+server_iv = hkdf.compute_iv(server_initial_secret)
+assert  server_iv == unhexlify("bab2b12a4c76016ace47856d")
+
+= Test server HP
+server_hp = hkdf.compute_hp(server_initial_secret)
+assert server_hp == unhexlify("c0c499a65a60024a18a250974ea01dfa")
