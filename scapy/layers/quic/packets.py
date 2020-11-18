@@ -104,6 +104,7 @@ class QuicLongHeader(Packet):
                      length_from=lambda pkt: pkt.source_connection_id_length),
     ]
 
+    # TODO: move the two following methods to Quic0Rtt.
     def post_build(self, pkt: bytes, pay: bytes) -> bytes:
         if self.length is None:
             pnl = len(self.packet_number)
