@@ -1,10 +1,13 @@
-from typing import Tuple
 from binascii import unhexlify
+from typing import Tuple
+import struct
 
 from cryptography.hazmat.primitives.hashes import SHA256
 
 from scapy.layers.tls.crypto.hkdf import TLS13_HKDF
-from scapy.layers.tls.crypto.cipher_aead import *
+from scapy.layers.tls.crypto.cipher_aead import \
+    Cipher_CHACHA20_POLY1305_TLS13, Cipher_CHACHA20_POLY1305, Cipher_AES_128_GCM_TLS13, \
+    Cipher_AES_256_GCM_TLS13, Cipher_AES_128_CCM_TLS13, Cipher_AES_128_CCM_8_TLS13
 from scapy.packet import Packet
 
 # Labels
