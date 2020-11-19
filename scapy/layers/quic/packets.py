@@ -74,7 +74,42 @@ class QuicVarLenField(Field):
         return s + self.i2m(pkt, val)
 
 
-class QuicLongHeader(Packet):
+class CommonBehavior(Packet):
+    def without_payload(self) -> 'CommonBehavior':
+        """
+        Clones the packet, removes the payload and returns the result.
+
+        :return: A copy of the packet without the payload.
+        :rtype: CommonBehavior
+        """
+        pkt = self.copy()
+        pkt.remove_payload()
+        return pkt
+
+    def build_without_payload(self) -> bytes:
+        """
+        Clones the packet, removes the payload, builds the byte string and
+        returns the result.
+
+        :return: The bytes of the header fields without the payload.
+        :rtype: bytes
+        """
+        return self.without_payload().build()
+
+
+class PacketNumberInterface(CommonBehavior):
+    def post_build(self, pkt: bytes, pay: bytes) -> bytes:
+        if self.length is None:
+            pnl = len(self.packet_number)
+            pkt = pkt[:-pnl - 1] + encode_length(len(pay) + pnl + 16) + pkt[-pnl:]
+
+        return pkt + pay
+
+    def get_packet_number_length(self) -> int:
+        return self.packet_number_length + 1
+
+
+class QuicLongHeader(CommonBehavior):
     """
     Long Header Packet {
       Header Form (1) = 1,
@@ -104,40 +139,8 @@ class QuicLongHeader(Packet):
                      length_from=lambda pkt: pkt.source_connection_id_length),
     ]
 
-    # TODO: move the two following methods to Quic0Rtt.
-    def post_build(self, pkt: bytes, pay: bytes) -> bytes:
-        if self.length is None:
-            pnl = len(self.packet_number)
-            pkt = pkt[:-pnl - 1] + encode_length(len(pay) + pnl + 16) + pkt[-pnl:]
 
-        return pkt + pay
-
-    def get_packet_number_length(self) -> int:
-        return self.packet_number_length + 1
-
-    def without_payload(self) -> 'QuicLongHeader':
-        """
-        Clones the packet, removes the payload and returns the result.
-
-        :return: A copy of the packet without the payload.
-        :rtype: QuicLongHeader
-        """
-        pkt = self.copy()
-        pkt.remove_payload()
-        return pkt
-
-    def build_without_payload(self) -> bytes:
-        """
-        Clones the packet, removes the payload, builds the byte string and
-        returns the result.
-
-        :return: The bytes of the header fields without the payload.
-        :rtype: bytes
-        """
-        return self.without_payload().build()
-
-
-class Quic0Rtt(QuicLongHeader):
+class Quic0Rtt(QuicLongHeader, PacketNumberInterface):
     """
     0-RTT Packet {
       Header Form (1) = 1,
@@ -162,11 +165,12 @@ class Quic0Rtt(QuicLongHeader):
     fields_desc.insert(4, BitFieldLenField("packet_number_length", 1, 2, length_of="packet_number"))
     fields_desc.extend([
         QuicVarLenField("length", None),
-        XStrLenField("packet_number", b"", length_from=QuicLongHeader.get_packet_number_length)
+        XStrLenField("packet_number", b"",
+                     length_from=PacketNumberInterface.get_packet_number_length)
     ])
 
 
-class QuicInitial(QuicLongHeader):
+class QuicInitial(Quic0Rtt):
     """
     Initial Packet {
       Header Form (1) = 1,
@@ -193,7 +197,7 @@ class QuicInitial(QuicLongHeader):
     fields_desc.insert(11, XStrLenField("token", b"", length_from=lambda pkt: pkt.token_length))
 
 
-class QuicHandshake(QuicLongHeader):
+class QuicHandshake(Quic0Rtt):
     """
     Handshake Packet {
       Header Form (1) = 1,
@@ -242,7 +246,7 @@ class QuicRetry(QuicLongHeader):
     ])
 
 
-class QuicVersionNegotiation(Packet):
+class QuicVersionNegotiation(CommonBehavior):
     """
     Version Negotiation Packet {
       Header Form (1) = 1,
@@ -271,7 +275,7 @@ class QuicVersionNegotiation(Packet):
     ]
 
 
-class QuicShortHeader(QuicLongHeader):
+class QuicShortHeader(PacketNumberInterface):
     """
     Short Header Packet {
       Header Form (1) = 0,
@@ -295,7 +299,8 @@ class QuicShortHeader(QuicLongHeader):
         BitFieldLenField("packet_number_length", 1, 2, length_of="packet_number"),
         XStrLenField("destination_connection_id", b"", max_length=20,
                      length_from=lambda pkt: pkt.get_destination_connection_id_length()),
-        XStrLenField("packet_number", b"", length_from=QuicLongHeader.get_packet_number_length)
+        XStrLenField("packet_number", b"",
+                     length_from=PacketNumberInterface.get_packet_number_length)
     ]
 
     # TODO: change when we know what to do here.
