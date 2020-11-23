@@ -8,7 +8,8 @@ from cryptography.hazmat.primitives.ciphers.algorithms import AES
 from cryptography.hazmat.primitives.ciphers.modes import ECB
 from cryptography.hazmat.primitives.hashes import SHA256
 
-from scapy.layers.quic.packets import MAX_PACKET_NUMBER_LEN, PacketNumberInterface
+from scapy.layers.quic.packets import QUIC_VERSION, MAX_PACKET_NUMBER_LEN, \
+    PacketNumberInterface, QuicInitial
 from scapy.layers.tls.crypto.cipher_aead import _AEADCipher_TLS13, \
     Cipher_AES_128_GCM_TLS13, Cipher_AES_128_CCM_TLS13, Cipher_AES_128_CCM_8_TLS13, \
     Cipher_AES_256_GCM_TLS13, Cipher_CHACHA20_POLY1305, Cipher_CHACHA20_POLY1305_TLS13
@@ -126,5 +127,18 @@ def header_protection(pkt: PacketNumberInterface, mask: bytes) -> bytes:
         .to_bytes(1, "big") + header[1:]
 
 
-def encrypt_packet(pkt: PacketNumberInterface):
-    pass
+def encrypt_initial(pkt: QuicInitial, client: bool = True) -> bytes:
+    hkdf = QuicHkdf()
+    secret = hkdf.get_client_and_server_secrets(
+        QUIC_VERSION,
+        pkt.destination_connection_id
+    )[int(not client)]
+    key, iv, hp = hkdf.derive_keys(secret)
+    enc_pl = aead(key, iv, pkt, Cipher_AES_128_GCM_TLS13)
+    return header_protection(
+        pkt,
+        header_protection_mask(
+            hp,
+            header_protection_sample(pkt, enc_pl)
+        )
+    ) + enc_pl
