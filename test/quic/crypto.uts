@@ -75,3 +75,28 @@ assert  server_iv == unhexlify("bab2b12a4c76016ace47856d")
 = Test server HP
 server_hp = hkdf.compute_hp(server_initial_secret)
 assert server_hp == unhexlify("c0c499a65a60024a18a250974ea01dfa")
+
+
++ Test client initial encryption
+=
+from scapy.layers.quic.packets import QuicInitial
+from scapy.layers.quic.crypto import aead, header_protection_sample
+from scapy.layers.tls.crypto.cipher_aead import Cipher_AES_128_GCM_TLS13
+
+= Parse client initial packet
+client_initial = QuicInitial(unhexlify(
+    "c3ff000020088394c8f03e5157080000449e00000002060040f1010000ed0303"
+    "ebf8fa56f12939b9584a3896472ec40bb863cfd3e86804fe3a47f06a2b69484c"
+    "00000413011302010000c000000010000e00000b6578616d706c652e636f6dff"
+    "01000100000a00080006001d0017001800100007000504616c706e0005000501"
+    "00000000003300260024001d00209370b2c9caa47fbabaf4559fedba753de171"
+    "fa71f50f1ce15d43e994ec74d748002b0003020304000d0010000e0403050306"
+    "030203080408050806002d00020101001c00024001ffa500320408ffffffffff"
+    "ffffff05048000ffff07048000ffff0801100104800075300901100f088394c8"
+    "f03e51570806048000ffff"
+))
+
+= Test client initial sample
+client_enc_pl = aead(client_key, client_iv, client_initial, Cipher_AES_128_GCM_TLS13)
+client_hp_sample = header_protection_sample(client_initial, client_enc_pl)
+assert client_hp_sample == unhexlify("fb66bc6a93032b50dd8973972d149421")
