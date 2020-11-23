@@ -7,6 +7,7 @@ from scapy.packet import Packet
 QUIC_VERSION = 0xff000020
 QUIC_HEADER_FORMS = {0: "Short", 1: "Long"}
 QUIC_LONG_PACKET_TYPES = {0: "Initial", 1: "0-RTT", 2: "Handshake", 3: "Retry"}
+MAX_PACKET_NUMBER_LEN = 4
 
 
 def decode_length(b: bytes) -> Tuple[bytes, int]:

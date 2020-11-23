@@ -101,29 +101,15 @@ def aead(key: bytes, iv: bytes, pkt: PacketNumberInterface,
                                                   pkt.packet_number)
 
 
-def get_sample(pkt: Packet):
-    pass
+def header_protection_sample(pkt: PacketNumberInterface, enc_pl: bytes) -> bytes:
+    sample_offset = MAX_PACKET_NUMBER_LEN - pkt.get_packet_number_length()
+    return enc_pl[sample_offset: sample_offset + HEADER_PROTECTION_SAMPLE_LENGTH]
 
 
-"""
-sample_offset = 1 + len(connection_id) + 4
-sample = packet[sample_offset..sample_offset+sample_length]
-
-sample_offset = 7 + len(destination_connection_id) +
-                    len(source_connection_id) +
-                    len(payload_length) + 4
-if packet_type == Initial:
-    sample_offset += len(token_length) +
-                     len(token)
-
-sample = packet[sample_offset..sample_offset+sample_length]
-"""
-
-
-def hp_sample(hp_protection_key, sample, cipher_suite):
+def header_protection(hp_protection_key, sample, cipher_suite):
     pass
 
 
 # Protect Initial packet
-def encrypt_initial(pkt: Packet):
+def encrypt_initial(pkt: QuicInitial):
     pass
