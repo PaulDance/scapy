@@ -1,14 +1,14 @@
-from binascii import unhexlify
-from typing import Tuple
 import struct
+from binascii import unhexlify
+from typing import Tuple, Type
 
 from cryptography.hazmat.primitives.hashes import SHA256
 
+from scapy.layers.quic.packets import MAX_PACKET_NUMBER_LEN, PacketNumberInterface, QuicInitial
+from scapy.layers.tls.crypto.cipher_aead import _AEADCipher_TLS13, \
+    Cipher_AES_128_GCM_TLS13, Cipher_AES_128_CCM_TLS13, Cipher_AES_128_CCM_8_TLS13, \
+    Cipher_AES_256_GCM_TLS13, Cipher_CHACHA20_POLY1305, Cipher_CHACHA20_POLY1305_TLS13
 from scapy.layers.tls.crypto.hkdf import TLS13_HKDF
-from scapy.layers.tls.crypto.cipher_aead import \
-    Cipher_CHACHA20_POLY1305_TLS13, Cipher_CHACHA20_POLY1305, Cipher_AES_128_GCM_TLS13, \
-    Cipher_AES_256_GCM_TLS13, Cipher_AES_128_CCM_TLS13, Cipher_AES_128_CCM_8_TLS13
-from scapy.packet import Packet
 
 # Labels
 LABEL_CLIENT = b"client in"
@@ -23,6 +23,8 @@ SPECIAL_INITIAL_SALTS = {
     0xff000016: "7fbcdb0e7c66bbe9193a96cd21519ebd7a02644a",
     0xff000020: "afbfec289993d24c9e9786f19c6111e04390a899",
 }
+
+HEADER_PROTECTION_SAMPLE_LENGTH = 16
 
 
 def get_initial_salt(version: int) -> bytes:
@@ -88,11 +90,13 @@ QUIC_CIPHERS = [
 ]
 
 
-def aead(key: bytes, iv: bytes, pkt: Packet, cipher_suite) -> bytes:
+def aead(key: bytes, iv: bytes, pkt: PacketNumberInterface,
+         cipher_suite: Type[_AEADCipher_TLS13]) -> bytes:
     if cipher_suite not in QUIC_CIPHERS:
         raise ValueError("Incorrect or non existent cipher suite used")
     else:
-        return cipher_suite(key, iv).auth_encrypt(pkt.payload,
+        return cipher_suite(key, iv).auth_encrypt(pkt.payload.build()
+                                                  + bytes([0] * HEADER_PROTECTION_SAMPLE_LENGTH),
                                                   pkt.build_without_payload(),
                                                   pkt.packet_number)
 
