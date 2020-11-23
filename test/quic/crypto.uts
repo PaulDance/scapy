@@ -113,7 +113,7 @@ assert header_protection(client_initial, client_hp_mask) \
     == unhexlify("cdff000020088394c8f03e5157080000449e9cdb990b")
 
 = Test client initial encryption result
-assert encrypt_initial(client_initial, client=True) == unhexlify(
+assert encrypt_initial(client_initial, dcid, client=True) == unhexlify(
     "cdff000020088394c8f03e5157080000449e9cdb990bfb66bc6a93032b50dd89"
     "73972d149421874d3849e3708d71354ea33bcdc356f3ea6e2a1a1bd7c3d14003"
     "8d3e784d04c30a2cdb40c32523aba2dafe1c1bf3d27a6be38fe38ae033fbb071"

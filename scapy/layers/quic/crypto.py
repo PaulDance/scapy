@@ -101,10 +101,11 @@ def aead(key: bytes, iv: bytes, pkt: PacketNumberInterface,
     if cipher_suite not in QUIC_CIPHERS:
         raise ValueError("Incorrect or non existent cipher suite used")
     else:
-        return cipher_suite(key, iv).auth_encrypt(pkt.payload.build()
-                                                  + bytes([0] * (pkt.length - len(pkt.build()) + 2)),
-                                                  pkt.build_without_payload(),
-                                                  pkt.packet_number)
+        return cipher_suite(key, iv) \
+            .auth_encrypt(pkt.payload.build()
+                          + bytes([0] * (pkt.length - len(pkt.build()) + 2)),
+                          pkt.build_without_payload(),
+                          pkt.packet_number)
 
 
 def header_protection_sample(pkt: PacketNumberInterface, enc_pl: bytes) -> bytes:
@@ -127,12 +128,9 @@ def header_protection(pkt: PacketNumberInterface, mask: bytes) -> bytes:
         .to_bytes(1, "big") + header[1:]
 
 
-def encrypt_initial(pkt: QuicInitial, client: bool = True) -> bytes:
+def encrypt_initial(pkt: QuicInitial, dcid: int, client: bool = True) -> bytes:
     hkdf = QuicHkdf()
-    secret = hkdf.get_client_and_server_secrets(
-        QUIC_VERSION,
-        pkt.destination_connection_id
-    )[int(not client)]
+    secret = hkdf.get_client_and_server_secrets(QUIC_VERSION, dcid)[int(not client)]
     key, iv, hp = hkdf.derive_keys(secret)
     enc_pl = aead(key, iv, pkt, Cipher_AES_128_GCM_TLS13)
     return header_protection(
