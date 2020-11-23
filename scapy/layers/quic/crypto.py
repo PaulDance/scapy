@@ -102,7 +102,7 @@ def aead(key: bytes, iv: bytes, pkt: PacketNumberInterface,
         raise ValueError("Incorrect or non existent cipher suite used")
     else:
         return cipher_suite(key, iv).auth_encrypt(pkt.payload.build()
-                                                  + bytes([0] * HEADER_PROTECTION_SAMPLE_LENGTH),
+                                                  + bytes([0] * (pkt.length - len(pkt.build()) + 2)),
                                                   pkt.build_without_payload(),
                                                   pkt.packet_number)
 
