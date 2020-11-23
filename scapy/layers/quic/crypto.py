@@ -2,6 +2,10 @@ import struct
 from binascii import unhexlify
 from typing import Tuple, Type
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers.algorithms import AES
+from cryptography.hazmat.primitives.ciphers.modes import ECB
 from cryptography.hazmat.primitives.hashes import SHA256
 
 from scapy.layers.quic.packets import MAX_PACKET_NUMBER_LEN, PacketNumberInterface, QuicInitial
@@ -25,6 +29,7 @@ SPECIAL_INITIAL_SALTS = {
 }
 
 HEADER_PROTECTION_SAMPLE_LENGTH = 16
+HEADER_PROTECTION_MASK_LENGTH = 5
 
 
 def get_initial_salt(version: int) -> bytes:
@@ -104,6 +109,11 @@ def aead(key: bytes, iv: bytes, pkt: PacketNumberInterface,
 def header_protection_sample(pkt: PacketNumberInterface, enc_pl: bytes) -> bytes:
     sample_offset = MAX_PACKET_NUMBER_LEN - pkt.get_packet_number_length()
     return enc_pl[sample_offset: sample_offset + HEADER_PROTECTION_SAMPLE_LENGTH]
+
+
+def header_protection_mask(hp: bytes, sample: bytes) -> bytes:
+    encryptor = Cipher(AES(hp), ECB(), default_backend()).encryptor()
+    return (encryptor.update(sample) + encryptor.finalize())[:HEADER_PROTECTION_MASK_LENGTH]
 
 
 def header_protection(hp_protection_key, sample, cipher_suite):
