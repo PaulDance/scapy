@@ -38,14 +38,6 @@ def get_initial_salt(version: int) -> bytes:
 
 
 class QuicHkdf(TLS13_HKDF):
-    @staticmethod
-    def label(label: bytes, hash_value: bytes, length: int) -> bytes:
-        full_label = b"tls13 " + label
-        return struct.pack("!HB", length, len(full_label)) \
-               + full_label \
-               + struct.pack("!B", len(hash_value)) \
-               + hash_value
-
     def compute_key(self, secret: bytes) -> bytes:
         return self.expand_label(secret, LABEL_AEAD_KEY, b"", 16)
 
