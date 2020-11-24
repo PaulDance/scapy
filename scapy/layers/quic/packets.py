@@ -51,26 +51,18 @@ def encode_length(i: Optional[int]) -> bytes:
     """
     if i is None:
         return b'\x00'
-    elif i < 0x40:
-        b = i.to_bytes(1, byteorder="big")
-        ba = bytearray(b)
-        return bytes(ba)
-    elif i < 0x4000:
-        b = i.to_bytes(2, byteorder="big")
-        ba = bytearray(b)
-        ba[0] = b[0] ^ 0x40
-        return bytes(ba)
-    elif i < 0x40000000:
-        b = i.to_bytes(4, byteorder="big")
-        ba = bytearray(b)
-        ba[0] = b[0] ^ 0x80
-        return bytes(ba)
-    elif i < 0x4000000000000000:
-        b = i.to_bytes(8, byteorder="big")
-        ba = bytearray(b)
-        ba[0] = b[0] ^ 0xc0
-        return bytes(ba)
     else:
+        for bound, length, mask in (
+                (0x40, 1, 0x00),
+                (0x4000, 2, 0x40),
+                (0x40000000, 4, 0x80),
+                (0x4000000000000000, 8, 0xc0)
+        ):
+            if i < bound:
+                bytes_array = bytearray(i.to_bytes(length, "big"))
+                bytes_array[0] ^= mask
+                return bytes(bytes_array)
+
         raise ValueError("integer too big")
 
 
