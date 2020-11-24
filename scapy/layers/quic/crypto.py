@@ -1,4 +1,3 @@
-import struct
 from binascii import unhexlify
 from typing import Tuple, Type
 
@@ -120,11 +119,10 @@ def header_protection(pkt: PacketNumberInterface, mask: bytes) -> bytes:
         .to_bytes(1, "big") + header[1:]
 
 
-def encrypt_initial(pkt: QuicInitial, dcid: int, client: bool = True) -> bytes:
-    hkdf = QuicHkdf()
-    secret = hkdf.get_client_and_server_secrets(QUIC_VERSION, dcid)[int(not client)]
-    key, iv, hp = hkdf.derive_keys(secret)
-    enc_pl = aead(key, iv, pkt, Cipher_AES_128_GCM_TLS13)
+def encrypt_packet(pkt: PacketNumberInterface, secret: bytes,
+                   cipher_suite: Type[_AEADCipher_TLS13]) -> bytes:
+    key, iv, hp = QuicHkdf().derive_keys(secret)
+    enc_pl = aead(key, iv, pkt, cipher_suite)
     return header_protection(
         pkt,
         header_protection_mask(
@@ -132,3 +130,14 @@ def encrypt_initial(pkt: QuicInitial, dcid: int, client: bool = True) -> bytes:
             header_protection_sample(pkt, enc_pl)
         )
     ) + enc_pl
+
+
+def encrypt_initial(pkt: QuicInitial, dcid: int, client: bool = True) -> bytes:
+    return encrypt_packet(
+        pkt,
+        QuicHkdf().get_client_and_server_secrets(
+            QUIC_VERSION,
+            dcid
+        )[int(not client)],
+        Cipher_AES_128_GCM_TLS13
+    )
