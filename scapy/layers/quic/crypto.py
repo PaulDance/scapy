@@ -87,12 +87,17 @@ QUIC_CIPHERS = [
 ]
 
 
-def aead(key: bytes, iv: bytes, pkt: PacketNumberInterface,
-         cipher_suite: Type[_AEADCipher_TLS13]) -> bytes:
+def init_cipher(key: bytes, iv: bytes,
+                cipher_suite: Type[_AEADCipher_TLS13]) -> _AEADCipher_TLS13:
     if cipher_suite not in QUIC_CIPHERS:
         raise ValueError("Incorrect or non existent cipher suite used")
     else:
-        return cipher_suite(key, iv) \
+        return cipher_suite(key, iv)
+
+
+def aead_encrypt(key: bytes, iv: bytes, pkt: PacketNumberInterface,
+                 cipher_suite: Type[_AEADCipher_TLS13]) -> bytes:
+    return init_cipher(key, iv, cipher_suite) \
             .auth_encrypt(pkt.payload.build()
                           + bytes([0] * (pkt.length - len(pkt.build()) + 2)),
                           pkt.build_without_payload(),
@@ -122,7 +127,7 @@ def header_protection(pkt: PacketNumberInterface, mask: bytes) -> bytes:
 def encrypt_packet(pkt: PacketNumberInterface, secret: bytes,
                    cipher_suite: Type[_AEADCipher_TLS13]) -> bytes:
     key, iv, hp = QuicHkdf().derive_keys(secret)
-    enc_pl = aead(key, iv, pkt, cipher_suite)
+    enc_pl = aead_encrypt(key, iv, pkt, cipher_suite)
     return header_protection(
         pkt,
         header_protection_mask(
