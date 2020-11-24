@@ -11,6 +11,18 @@ MAX_PACKET_NUMBER_LEN = 4
 
 
 def decode_length(b: bytes) -> Tuple[bytes, int]:
+    """
+    Decodes the given bytes of variable-length integer representation to a
+    couple of the bytes of the integer and the integer itself.
+
+    QUIC-TLS, Section 16. defines variable-length integers and Appendix A.1.
+    shows a pseudocode for a variable-length integer decoding algorithm.
+
+    :param b: The bytes of the varint representation to convert.
+    :type b: bytes
+    :return: The couple of the bytes of the integer and the integer itself.
+    :rtype: Tuple[bytes, int]
+    """
     ba = bytearray(b)
     ba[0] = b[0] & 0x3f
     o1 = b[0] & 0xc0
@@ -26,6 +38,17 @@ def decode_length(b: bytes) -> Tuple[bytes, int]:
 
 
 def encode_length(i: Optional[int]) -> bytes:
+    """
+    Encodes the given number to its variable-length integer representation.
+
+    QUIC-TLS, Section 16. defines variable-length integers and Appendix A.1.
+    shows a pseudocode for a variable-length integer decoding algorithm.
+
+    :param i: The number to convert. `None` means the zero byte.
+    :type i: Optional[int]
+    :return: The number encoded as a variable-length integer.
+    :rtype: bytes
+    """
     if i is None:
         return b'\x00'
     elif i < 0x40:
@@ -52,6 +75,12 @@ def encode_length(i: Optional[int]) -> bytes:
 
 
 class QuicVarLenField(Field):
+    """
+    The QUIC variable-length integer encoding reserves the two most significant
+    bits of the first byte to encode the base-2 logarithm of the integer
+    encoding length in bytes. The integer value is encoded on the remaining
+    bits, in network byte order. (QUIC-TLS, Section 16.)
+    """
     __slots__ = ["length_of"]
 
     def __init__(self, name: str, default: Any, length_of: Optional[str] = None) -> None:
@@ -76,6 +105,10 @@ class QuicVarLenField(Field):
 
 
 class CommonBehavior(Packet):
+    """
+    Interface-like class adding methods common to all packet types.
+    """
+
     def without_payload(self) -> 'CommonBehavior':
         """
         Clones the packet, removes the payload and returns the result.
@@ -99,6 +132,11 @@ class CommonBehavior(Packet):
 
 
 class PacketNumberInterface(CommonBehavior):
+    """
+    Interface-like class adding methods common to all packet types containing
+    a packet number field.
+    """
+
     def post_build(self, pkt: bytes, pay: bytes) -> bytes:
         if self.length is None:
             pnl = len(self.packet_number)
@@ -107,6 +145,10 @@ class PacketNumberInterface(CommonBehavior):
         return pkt + pay
 
     def get_packet_number_length(self) -> int:
+        """
+        :return: The packet number length's true value, i.e. `pnl + 1`.
+        :rtype: int
+        """
         return self.packet_number_length + 1
 
 
