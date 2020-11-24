@@ -71,7 +71,7 @@ def encode_length(i: Optional[int]) -> bytes:
         ba[0] = b[0] ^ 0xc0
         return bytes(ba)
     else:
-        raise Exception("integer too big")
+        raise ValueError("integer too big")
 
 
 class QuicVarLenField(Field):
