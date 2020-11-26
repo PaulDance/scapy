@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.hashes import SHA256
 
 from scapy.layers.quic.packets import QUIC_VERSION, MAX_PACKET_NUMBER_LEN, \
     PacketNumberInterface, QuicInitial
-from scapy.layers.tls.crypto.cipher_aead import _AEADCipher_TLS13, AEADTagError, \
+from scapy.layers.tls.crypto.cipher_aead import _AEADCipher_TLS13, \
     Cipher_AES_128_GCM_TLS13, Cipher_AES_128_CCM_TLS13, Cipher_AES_128_CCM_8_TLS13, \
     Cipher_AES_256_GCM_TLS13, Cipher_CHACHA20_POLY1305, Cipher_CHACHA20_POLY1305_TLS13
 from scapy.layers.tls.crypto.hkdf import TLS13_HKDF
@@ -106,13 +106,10 @@ def aead_encrypt(key: bytes, iv: bytes, pkt: PacketNumberInterface,
 
 def aead_decrypt(key: bytes, iv: bytes, pkt: PacketNumberInterface,
                  cipher_suite: Type[_AEADCipher_TLS13]) -> bytes:
-    try:
-        return init_cipher(key, iv, cipher_suite) \
-            .auth_decrypt(pkt.build_without_payload(),
-                          pkt.payload.build(),
-                          pkt.packet_number)[0]
-    except AEADTagError as exc:
-        return exc.args[0]
+    return init_cipher(key, iv, cipher_suite) \
+        .auth_decrypt(pkt.build_without_payload(),
+                      pkt.payload.build(),
+                      pkt.packet_number)[0]
 
 
 def header_protection_sample(pkt: PacketNumberInterface, enc_pl: bytes) -> bytes:
