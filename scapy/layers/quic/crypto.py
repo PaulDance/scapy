@@ -157,6 +157,10 @@ class QuicHkdf(TLS13_HKDF):
 
 
 class QuicAead(object):
+    """
+    Handles Authenticated Encryption with Associated Data (AEAD) operations
+    for the QUIC protocol with checked cipher suites based on TLS1.3's.
+    """
     CIPHERS = (
         Cipher_CHACHA20_POLY1305_TLS13,
         Cipher_CHACHA20_POLY1305,
@@ -166,8 +170,8 @@ class QuicAead(object):
         Cipher_AES_128_CCM_8_TLS13,
     )
     """
-    List of cipher suites valid for QUIC: all cipher suites defined in TLS1.3 aside
-    from TLS_AES_128_CCM_8_SHA256.
+    Tuple of cipher suites valid for QUIC: all cipher suites defined in TLS1.3
+    aside from TLS_AES_128_CCM_8_SHA256.
     """
 
     def __init__(self, key: bytes, iv: bytes,
@@ -181,6 +185,7 @@ class QuicAead(object):
         :type iv: bytes
         :param cipher_suite: The cipher suite to use.
         :type cipher_suite: Type[_AEADCipher_TLS13]
+        :raise ValuError: When the given cipher is unknown.
         """
         if cipher_suite not in QuicAead.CIPHERS:
             raise ValueError("Incorrect or non existent cipher suite used")
@@ -211,6 +216,8 @@ class QuicAead(object):
         :type pkt: PacketNumberInterface
         :return: The decrypted payload of the given packet.
         :rtype: bytes
+        :raise AEADTagError: When the authentication tags do not match
+                             by comparing after decryption.
         """
         return self.cipher.auth_decrypt(
             pkt.build_without_payload(),
