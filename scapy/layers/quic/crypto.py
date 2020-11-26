@@ -167,17 +167,18 @@ def decrypt_packet(pkt: PacketNumberInterface, secret: bytes,
 
     header = pkt.build_without_payload()
     pn_len = ((header[0] ^ mask[0] & 0x0f if header[0] & 0x80 == 0x80 else 0x1f) & 0x03) + 1
-    shift = pn_len - pkt.get_packet_number_length()
+    lpart = pkt.packet_number[pn_len:]
+    rshift = max(0, pn_len - pkt.get_packet_number_length())
 
     pkt.reserved_bits = 0
     pkt.packet_number_length = pn_len - 1
     pkt.packet_number = (int.from_bytes(pkt.packet_number[:pn_len]
-                                        + pkt.payload.build()[:shift], "big")
+                                        + pkt.payload.build()[:rshift], "big")
                          ^ int.from_bytes(mask[1: pn_len + 1], "big")).to_bytes(pn_len, "big")
 
     return pkt.without_payload() / aead_decrypt(key, iv,
                                                 pkt.without_payload()
-                                                / pkt.payload.build()[shift:],
+                                                / (lpart + pkt.payload.build()[rshift:]),
                                                 cipher_suite)
 
 
