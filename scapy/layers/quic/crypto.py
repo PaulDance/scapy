@@ -157,14 +157,14 @@ class QuicHkdf(TLS13_HKDF):
 
 
 class QuicAead(object):
-    CIPHERS = [
+    CIPHERS = (
         Cipher_CHACHA20_POLY1305_TLS13,
         Cipher_CHACHA20_POLY1305,
         Cipher_AES_128_GCM_TLS13,
         Cipher_AES_256_GCM_TLS13,
         Cipher_AES_128_CCM_TLS13,
         Cipher_AES_128_CCM_8_TLS13,
-    ]
+    )
     """
     List of cipher suites valid for QUIC: all cipher suites defined in TLS1.3 aside
     from TLS_AES_128_CCM_8_SHA256.
