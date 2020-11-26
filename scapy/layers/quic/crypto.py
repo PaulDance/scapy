@@ -104,14 +104,14 @@ class QuicHkdf(TLS13_HKDF):
                self.compute_iv(secret), \
                self.compute_hp(secret),
 
-    def get_initial_secret(self, version: int, dcid: int) -> bytes:
+    def get_initial_secret(self, version: int, dcid: bytes) -> bytes:
         """
         Generates the initial secret for the given version and DCID.
 
         :param version: The QUIC version used.
         :type version: int
         :param dcid: The Destination Connection Id.
-        :type dcid: int
+        :type dcid: bytes
         :return: The initial secret.
         :rtype: bytes
         """
@@ -139,7 +139,7 @@ class QuicHkdf(TLS13_HKDF):
         """
         return self.expand_label(initial_secret, LABEL_SERVER, b"", SHA256.digest_size)
 
-    def get_client_and_server_secrets(self, version: int, dcid: int) -> Tuple[bytes, bytes]:
+    def get_client_and_server_secrets(self, version: int, dcid: bytes) -> Tuple[bytes, bytes]:
         """
         Shortcut to derive both the client and server initial secrets at
         once by computing the common initial secret only one time.
@@ -147,7 +147,7 @@ class QuicHkdf(TLS13_HKDF):
         :param version: The QUIC version to use.
         :type version: int
         :param dcid: The Destination Connection Id to use.
-        :type dcid: int
+        :type dcid: bytes
         :return: The two initial secrets as a couple of byte strings.
         :rtype: Tuple[bytes, bytes]
         """
@@ -310,14 +310,14 @@ def encrypt_packet(pkt: PacketNumberInterface, secret: bytes,
     ) + enc_pl
 
 
-def encrypt_initial(pkt: QuicInitial, dcid: int, client: bool = True) -> bytes:
+def encrypt_initial(pkt: QuicInitial, dcid: bytes, client: bool = True) -> bytes:
     """
     Specialized encryption function for QUIC Initial packets only.
 
     :param pkt: The initial packet to encrypt.
     :type pkt: QuicInitial
     :param dcid: The Destination Connection Id to use.
-    :type dcid: int
+    :type dcid: bytes
     :param client: Whether the packet is a client's or a server's, client by
                    default (`True`).
     :type client: bool
@@ -370,14 +370,14 @@ def decrypt_packet(pkt: PacketNumberInterface, secret: bytes,
                                                 cipher_suite)
 
 
-def decrypt_initial(pkt: QuicInitial, dcid: int, client: bool = True) -> QuicInitial:
+def decrypt_initial(pkt: QuicInitial, dcid: bytes, client: bool = True) -> QuicInitial:
     """
     Specialized decryption function for QUIC Initial packets only.
 
     :param pkt: The partially parsed initial packet to decrypt.
     :type pkt: QuicInitial
     :param dcid: The Destination Connection Id to use.
-    :type dcid: int
+    :type dcid: bytes
     :param client: Whether the packet is a client's or a server's, client by
                    default (`True`).
     :type client: bool
