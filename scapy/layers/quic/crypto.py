@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.hashes import SHA256
 
 from scapy.layers.quic.packets import QUIC_VERSION, MAX_PACKET_NUMBER_LEN, \
     PacketNumberInterface, QuicInitial
-from scapy.layers.tls.crypto.cipher_aead import _AEADCipher_TLS13, \
+from scapy.layers.tls.crypto.cipher_aead import _AEADCipher_TLS13, AEADTagError, \
     Cipher_AES_128_GCM_TLS13, Cipher_AES_128_CCM_TLS13, Cipher_AES_128_CCM_8_TLS13, \
     Cipher_AES_256_GCM_TLS13, Cipher_CHACHA20_POLY1305, Cipher_CHACHA20_POLY1305_TLS13
 from scapy.layers.tls.crypto.hkdf import TLS13_HKDF
@@ -104,6 +104,17 @@ def aead_encrypt(key: bytes, iv: bytes, pkt: PacketNumberInterface,
                       pkt.packet_number)
 
 
+def aead_decrypt(key: bytes, iv: bytes, pkt: PacketNumberInterface,
+                 cipher_suite: Type[_AEADCipher_TLS13]) -> bytes:
+    try:
+        return init_cipher(key, iv, cipher_suite) \
+            .auth_decrypt(pkt.build_without_payload(),
+                          pkt.payload.build(),
+                          pkt.packet_number)[0]
+    except AEADTagError as exc:
+        return exc.args[0]
+
+
 def header_protection_sample(pkt: PacketNumberInterface, enc_pl: bytes) -> bytes:
     sample_offset = MAX_PACKET_NUMBER_LEN - pkt.get_packet_number_length()
     return enc_pl[sample_offset: sample_offset + HEADER_PROTECTION_SAMPLE_LENGTH]
@@ -139,6 +150,39 @@ def encrypt_packet(pkt: PacketNumberInterface, secret: bytes,
 
 def encrypt_initial(pkt: QuicInitial, dcid: int, client: bool = True) -> bytes:
     return encrypt_packet(
+        pkt,
+        QuicHkdf().get_client_and_server_secrets(
+            QUIC_VERSION,
+            dcid
+        )[int(not client)],
+        Cipher_AES_128_GCM_TLS13
+    )
+
+
+def decrypt_packet(pkt: PacketNumberInterface, secret: bytes,
+                   cipher_suite: Type[_AEADCipher_TLS13]) -> PacketNumberInterface:
+    pkt = pkt.copy()
+    key, iv, hp = QuicHkdf().derive_keys(secret)
+    mask = header_protection_mask(hp, header_protection_sample(pkt, pkt.payload.build()))
+
+    header = pkt.build_without_payload()
+    pn_len = ((header[0] ^ mask[0] & 0x0f if header[0] & 0x80 == 0x80 else 0x1f) & 0x03) + 1
+    shift = pn_len - pkt.get_packet_number_length()
+
+    pkt.reserved_bits = 0
+    pkt.packet_number_length = pn_len - 1
+    pkt.packet_number = (int.from_bytes(pkt.packet_number[:pn_len]
+                                        + pkt.payload.build()[:shift], "big")
+                         ^ int.from_bytes(mask[1: pn_len + 1], "big")).to_bytes(pn_len, "big")
+
+    return pkt.without_payload() / aead_decrypt(key, iv,
+                                                pkt.without_payload()
+                                                / pkt.payload.build()[shift:],
+                                                cipher_suite)
+
+
+def decrypt_initial(pkt: QuicInitial, dcid: int, client: bool = True) -> QuicInitial:
+    return decrypt_packet(
         pkt,
         QuicHkdf().get_client_and_server_secrets(
             QUIC_VERSION,
