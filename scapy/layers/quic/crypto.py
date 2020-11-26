@@ -156,83 +156,67 @@ class QuicHkdf(TLS13_HKDF):
                self.get_server_initial_secret(initial_secret),
 
 
-QUIC_CIPHERS = [
-    Cipher_CHACHA20_POLY1305_TLS13,
-    Cipher_CHACHA20_POLY1305,
-    Cipher_AES_128_GCM_TLS13,
-    Cipher_AES_256_GCM_TLS13,
-    Cipher_AES_128_CCM_TLS13,
-    Cipher_AES_128_CCM_8_TLS13,
-]
-"""
-List of cipher suites valid for QUIC: all cipher suites defined in TLS1.3 aside
-from TLS_AES_128_CCM_8_SHA256.
-"""
-
-
-def init_cipher(key: bytes, iv: bytes,
-                cipher_suite: Type[_AEADCipher_TLS13]) -> _AEADCipher_TLS13:
+class QuicAead(object):
+    CIPHERS = [
+        Cipher_CHACHA20_POLY1305_TLS13,
+        Cipher_CHACHA20_POLY1305,
+        Cipher_AES_128_GCM_TLS13,
+        Cipher_AES_256_GCM_TLS13,
+        Cipher_AES_128_CCM_TLS13,
+        Cipher_AES_128_CCM_8_TLS13,
+    ]
     """
-    Initializes the cipher from the AEAD key and IV.
-
-    :param key: The encryption key to use.
-    :type key: bytes
-    :param iv: The encryption initialization vector to use.
-    :type iv: bytes
-    :param cipher_suite: The cipher suite to use.
-    :type cipher_suite: Type[_AEADCipher_TLS13]
-    :return: The initialized cipher.
-    :rtype: _AEADCipher_TLS13
+    List of cipher suites valid for QUIC: all cipher suites defined in TLS1.3 aside
+    from TLS_AES_128_CCM_8_SHA256.
     """
-    if cipher_suite not in QUIC_CIPHERS:
-        raise ValueError("Incorrect or non existent cipher suite used")
-    else:
-        return cipher_suite(key, iv)
 
+    def __init__(self, key: bytes, iv: bytes,
+                 cipher_suite: Type[_AEADCipher_TLS13]):
+        """
+        Initializes the cipher from the AEAD key and IV.
 
-def aead_encrypt(key: bytes, iv: bytes, pkt: PacketNumberInterface,
-                 cipher_suite: Type[_AEADCipher_TLS13]) -> bytes:
-    """
-    Performs AEAD encryption on the given packet.
+        :param key: The encryption key to use.
+        :type key: bytes
+        :param iv: The encryption initialization vector to use.
+        :type iv: bytes
+        :param cipher_suite: The cipher suite to use.
+        :type cipher_suite: Type[_AEADCipher_TLS13]
+        """
+        if cipher_suite not in QuicAead.CIPHERS:
+            raise ValueError("Incorrect or non existent cipher suite used")
+        else:
+            self.cipher = cipher_suite(key, iv)
 
-    :param key: The encryption key to use.
-    :type key: bytes
-    :param iv: The encryption initialization vector to use.
-    :type iv: bytes
-    :param cipher_suite: The cipher suite to use.
-    :type cipher_suite: Type[_AEADCipher_TLS13]
-    :param pkt: The QUIC packet to encrypt.
-    :type pkt: PacketNumberInterface
-    :return: The encrypted payload of the given packet.
-    :rtype: bytes
-    """
-    return init_cipher(key, iv, cipher_suite) \
-        .auth_encrypt(pkt.payload.build()
-                      + bytes([0] * (pkt.length - len(pkt.build()) + 2)),
-                      pkt.build_without_payload(),
-                      pkt.packet_number)
+    def encrypt(self, pkt: PacketNumberInterface) -> bytes:
+        """
+        Performs AEAD encryption on the given packet.
 
+        :param pkt: The QUIC packet to encrypt.
+        :type pkt: PacketNumberInterface
+        :return: The encrypted payload of the given packet.
+        :rtype: bytes
+        """
+        return self.cipher.auth_encrypt(
+            pkt.payload.build()
+            + bytes([0] * (pkt.length - len(pkt.build()) + 2)),
+            pkt.build_without_payload(),
+            pkt.packet_number
+        )
 
-def aead_decrypt(key: bytes, iv: bytes, pkt: PacketNumberInterface,
-                 cipher_suite: Type[_AEADCipher_TLS13]) -> bytes:
-    """
-    Performs AEAD decryption on the given packet.
+    def decrypt(self, pkt: PacketNumberInterface) -> bytes:
+        """
+        Performs AEAD decryption on the given packet.
 
-    :param key: The encryption key to use.
-    :type key: bytes
-    :param iv: The encryption initialization vector to use.
-    :type iv: bytes
-    :param cipher_suite: The cipher suite to use.
-    :type cipher_suite: Type[_AEADCipher_TLS13]
-    :param pkt: The QUIC packet to decrypt.
-    :type pkt: PacketNumberInterface
-    :return: The decrypted payload of the given packet.
-    :rtype: bytes
-    """
-    return init_cipher(key, iv, cipher_suite) \
-        .auth_decrypt(pkt.build_without_payload(),
-                      pkt.payload.build(),
-                      pkt.packet_number)[0]
+        :param pkt: The QUIC packet to decrypt.
+        :type pkt: PacketNumberInterface
+        :return: The decrypted payload of the given packet.
+        :rtype: bytes
+        """
+        return self.cipher.auth_decrypt(
+            pkt.build_without_payload(),
+            pkt.payload.build(),
+            pkt.packet_number
+        )[0]
 
 
 def header_protection_sample(pkt: PacketNumberInterface, enc_pl: bytes) -> bytes:
@@ -300,7 +284,7 @@ def encrypt_packet(pkt: PacketNumberInterface, secret: bytes,
     :rtype: bytes
     """
     key, iv, hp = QuicHkdf().derive_keys(secret)
-    enc_pl = aead_encrypt(key, iv, pkt, cipher_suite)
+    enc_pl = QuicAead(key, iv, cipher_suite).encrypt(pkt)
     return header_protection(
         pkt,
         header_protection_mask(
@@ -364,10 +348,8 @@ def decrypt_packet(pkt: PacketNumberInterface, secret: bytes,
                                         + pkt.payload.build()[:rshift], "big")
                          ^ int.from_bytes(mask[1: pn_len + 1], "big")).to_bytes(pn_len, "big")
 
-    return pkt.without_payload() / aead_decrypt(key, iv,
-                                                pkt.without_payload()
-                                                / (lpart + pkt.payload.build()[rshift:]),
-                                                cipher_suite)
+    return pkt.without_payload() / QuicAead(key, iv, cipher_suite) \
+        .decrypt(pkt.without_payload() / (lpart + pkt.payload.build()[rshift:]))
 
 
 def decrypt_initial(pkt: QuicInitial, dcid: bytes, client: bool = True) -> QuicInitial:
