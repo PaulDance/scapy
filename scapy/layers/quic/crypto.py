@@ -98,10 +98,10 @@ def init_cipher(key: bytes, iv: bytes,
 def aead_encrypt(key: bytes, iv: bytes, pkt: PacketNumberInterface,
                  cipher_suite: Type[_AEADCipher_TLS13]) -> bytes:
     return init_cipher(key, iv, cipher_suite) \
-            .auth_encrypt(pkt.payload.build()
-                          + bytes([0] * (pkt.length - len(pkt.build()) + 2)),
-                          pkt.build_without_payload(),
-                          pkt.packet_number)
+        .auth_encrypt(pkt.payload.build()
+                      + bytes([0] * (pkt.length - len(pkt.build()) + 2)),
+                      pkt.build_without_payload(),
+                      pkt.packet_number)
 
 
 def header_protection_sample(pkt: PacketNumberInterface, enc_pl: bytes) -> bytes:

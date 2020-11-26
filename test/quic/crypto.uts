@@ -33,7 +33,7 @@ assert client_key == unhexlify("175257a31eb09dea9366d8bb79ad80ba")
 
 = Test client IV
 client_iv = hkdf.compute_iv(client_initial_secret)
-assert  client_iv == unhexlify("6b26114b9cba2b63a9e8dd4f")
+assert client_iv == unhexlify("6b26114b9cba2b63a9e8dd4f")
 
 = Test client HP
 client_hp = hkdf.compute_hp(client_initial_secret)
@@ -50,7 +50,7 @@ assert server_key == unhexlify("149d0b1662ab871fbe63c49b5e655a5d")
 
 = Test server IV
 server_iv = hkdf.compute_iv(server_initial_secret)
-assert  server_iv == unhexlify("bab2b12a4c76016ace47856d")
+assert server_iv == unhexlify("bab2b12a4c76016ace47856d")
 
 = Test server HP
 server_hp = hkdf.compute_hp(server_initial_secret)
