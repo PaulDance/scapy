@@ -42,8 +42,8 @@ assert server_initial.packet_number == unhexlify("0001")
 
 = Parse server Retry packet
 server_retry = QuicRetry(unhexlify(
-    "ffff0000200008f067a5502a4262b5746f6b656e59756519dd6cc85bd90e33a9"
-    "34d2ff85"
+    "ff000000010008f067a5502a4262b5746f6b656e04a265ba2eff4d829058fb3f"
+    "0f2496ba"
 ))
 assert server_retry.header_form == 1
 assert server_retry.fixed_bit == 1
@@ -55,4 +55,4 @@ assert server_retry.destination_connection_id == b""
 assert server_retry.source_connection_id_length == 8
 assert server_retry.source_connection_id == SCID
 assert server_retry.retry_token == unhexlify("746f6b656e")
-assert server_retry.retry_integrity_tag == unhexlify("59756519dd6cc85bd90e33a934d2ff85")
+assert server_retry.retry_integrity_tag == unhexlify("04a265ba2eff4d829058fb3f0f2496ba")

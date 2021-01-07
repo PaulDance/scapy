@@ -27,6 +27,7 @@ SPECIAL_INITIAL_SALTS = {
     0xff000017: "c3eef712c72ebb5a11a7d2432bb46365bef9f502",
     0xff000016: "7fbcdb0e7c66bbe9193a96cd21519ebd7a02644a",
     0xff000020: "afbfec289993d24c9e9786f19c6111e04390a899",
+    0x00000001: "38762cf7f55934b34d179ae6a4c80cadccbb7f0a",
 }
 
 # Header protection constant lengths.
