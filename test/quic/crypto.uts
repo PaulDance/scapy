@@ -181,5 +181,4 @@ assert header_protection_sample(server_initial_encrypted,
 assert header_protection_mask(server_hp, server_hp_sample) == server_hp_mask
 
 = Test server initial decryption result
-server_initial
 assert decrypt_initial(server_initial_encrypted, DCID, client=False).build() == server_initial.build()
