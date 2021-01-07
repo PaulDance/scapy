@@ -8,9 +8,7 @@ from scapy.layers.quic.crypto import (
     LABEL_CLIENT, LABEL_SERVER, LABEL_AEAD_KEY,
     LABEL_IV, LABEL_HP, get_initial_salt, QuicHkdf
 )
-
-# Values from QUIC-TLS draft - Appendix A.
-dcid = unhexlify("8394c8f03e515708")
+from test.quic import DCID
 hkdf = QuicHkdf()
 
 = Test initial salt
@@ -18,7 +16,7 @@ assert get_initial_salt(QUIC_VERSION) \
     == unhexlify("afbfec289993d24c9e9786f19c6111e04390a899")
 
 = Test initial secret
-initial_secret = hkdf.get_initial_secret(QUIC_VERSION, dcid)
+initial_secret = hkdf.get_initial_secret(QUIC_VERSION, DCID)
 assert initial_secret == unhexlify("1e7e7764529715b1e0ddc8e9753c6157"
                                    "6769605187793ed366f8bbf8c9e986eb")
 
@@ -65,19 +63,10 @@ from scapy.layers.quic.crypto import (
     header_protection, encrypt_initial, decrypt_initial
 )
 from scapy.layers.tls.crypto.cipher_aead import Cipher_AES_128_GCM_TLS13
+from test.quic import CLIENT_INITIAL_BYTES, SERVER_INITIAL_BYTES
 
 = Parse client initial packet
-client_initial = QuicInitial(unhexlify(
-    "c3ff000020088394c8f03e5157080000449e00000002060040f1010000ed0303"
-    "ebf8fa56f12939b9584a3896472ec40bb863cfd3e86804fe3a47f06a2b69484c"
-    "00000413011302010000c000000010000e00000b6578616d706c652e636f6dff"
-    "01000100000a00080006001d0017001800100007000504616c706e0005000501"
-    "00000000003300260024001d00209370b2c9caa47fbabaf4559fedba753de171"
-    "fa71f50f1ce15d43e994ec74d748002b0003020304000d0010000e0403050306"
-    "030203080408050806002d00020101001c00024001ffa500320408ffffffffff"
-    "ffffff05048000ffff07048000ffff0801100104800075300901100f088394c8"
-    "f03e51570806048000ffff"
-))
+client_initial = QuicInitial(CLIENT_INITIAL_BYTES)
 
 = Test client initial sample
 client_enc_pl = QuicAead(client_key, client_iv, Cipher_AES_128_GCM_TLS13).encrypt(client_initial)
@@ -133,7 +122,7 @@ client_initial_encrypted_bytes = unhexlify(
     "089316e7d1d89ec099db3b2b268725d888536a4b8bf9aee8fb43e82a4d919d48"
     "b5a464ca5b62df3be35ee0d0a2ec68f3"
 )
-assert encrypt_initial(client_initial, dcid, client=True) == client_initial_encrypted_bytes
+assert encrypt_initial(client_initial, DCID, client=True) == client_initial_encrypted_bytes
 
 
 + Test client initial decryption
@@ -149,17 +138,12 @@ assert header_protection_mask(client_hp, client_hp_sample) == client_hp_mask
 
 = Test client initial decryption result
 assert decrypt_initial(client_initial_encrypted,
-                       dcid, client=True).build().rstrip(b"\x00") == client_initial.build()
+                       DCID, client=True).build().rstrip(b"\x00") == client_initial.build()
 
 
 + Test server initial encryption
 = Parse server initial packet
-server_initial = QuicInitial(unhexlify(
-    "c1ff0000200008f067a5502a4262b5004075000102000000000600405a020000"
-    "560303eefce7f7b37ba1d1632e96677825ddf73988cfc79825df566dc5430b9a"
-    "045a1200130100002e00330024001d00209d3c940d89690b84d08a60993c144e"
-    "ca684d1081287c834d5311bcf32bb9da1a002b00020304"
-))
+server_initial = QuicInitial(SERVER_INITIAL_BYTES)
 
 = Test server initial sample
 server_enc_pl = QuicAead(server_key, server_iv, Cipher_AES_128_GCM_TLS13).encrypt(server_initial)
@@ -182,7 +166,7 @@ server_initial_encrypted_bytes = unhexlify(
     "be2f24f2d86027572943533846caa13e6f163fb257473d0eda5047360fd4a47e"
     "fd8142fafc0f76"
 )
-assert encrypt_initial(server_initial, dcid, client=False) == server_initial_encrypted_bytes
+assert encrypt_initial(server_initial, DCID, client=False) == server_initial_encrypted_bytes
 
 
 + Test server initial decryption
@@ -198,4 +182,4 @@ assert header_protection_mask(server_hp, server_hp_sample) == server_hp_mask
 
 = Test server initial decryption result
 server_initial
-assert decrypt_initial(server_initial_encrypted, dcid, client=False).build() == server_initial.build()
+assert decrypt_initial(server_initial_encrypted, DCID, client=False).build() == server_initial.build()

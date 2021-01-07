@@ -5,25 +5,16 @@
 from binascii import unhexlify
 from scapy.layers.quic import QUIC_VERSION
 from scapy.layers.quic.packets import QuicInitial, QuicRetry
+from test.quic import SCID, DCID, CLIENT_INITIAL_BYTES, SERVER_INITIAL_BYTES
 
-client_initial = QuicInitial(unhexlify(
-    "c3ff000020088394c8f03e5157080000449e00000002060040f1010000ed0303"
-    "ebf8fa56f12939b9584a3896472ec40bb863cfd3e86804fe3a47f06a2b69484c"
-    "00000413011302010000c000000010000e00000b6578616d706c652e636f6dff"
-    "01000100000a00080006001d0017001800100007000504616c706e0005000501"
-    "00000000003300260024001d00209370b2c9caa47fbabaf4559fedba753de171"
-    "fa71f50f1ce15d43e994ec74d748002b0003020304000d0010000e0403050306"
-    "030203080408050806002d00020101001c00024001ffa500320408ffffffffff"
-    "ffffff05048000ffff07048000ffff0801100104800075300901100f088394c8"
-    "f03e51570806048000ffff"
-))
+client_initial = QuicInitial(CLIENT_INITIAL_BYTES)
 assert client_initial.header_form == 1
 assert client_initial.fixed_bit == 1
 assert client_initial.long_packet_type == 0
 assert client_initial.reserved_bits == 0
 assert client_initial.version == QUIC_VERSION
 assert client_initial.destination_connection_id_length == 8
-assert client_initial.destination_connection_id == unhexlify("8394c8f03e515708")
+assert client_initial.destination_connection_id == DCID
 assert client_initial.source_connection_id_length == 0
 assert client_initial.source_connection_id == b""
 assert client_initial.token_length == 0
@@ -33,12 +24,7 @@ assert client_initial.get_packet_number_length() == 4
 assert client_initial.packet_number == unhexlify("00000002")
 
 = Parse server Initial packet
-server_initial = QuicInitial(unhexlify(
-    "c1ff0000200008f067a5502a4262b5004075000102000000000600405a020000"
-    "560303eefce7f7b37ba1d1632e96677825ddf73988cfc79825df566dc5430b9a"
-    "045a1200130100002e00330024001d00209d3c940d89690b84d08a60993c144e"
-    "ca684d1081287c834d5311bcf32bb9da1a002b00020304"
-))
+server_initial = QuicInitial(SERVER_INITIAL_BYTES)
 assert server_initial.header_form == 1
 assert server_initial.fixed_bit == 1
 assert server_initial.long_packet_type == 0
@@ -47,7 +33,7 @@ assert server_initial.version == QUIC_VERSION
 assert server_initial.destination_connection_id_length == 0
 assert server_initial.destination_connection_id == b""
 assert server_initial.source_connection_id_length == 8
-assert server_initial.source_connection_id == unhexlify("f067a5502a4262b5")
+assert server_initial.source_connection_id == SCID
 assert server_initial.token_length == 0
 assert server_initial.token == b""
 assert server_initial.length == 117
@@ -67,6 +53,6 @@ assert server_retry.version == QUIC_VERSION
 assert server_retry.destination_connection_id_length == 0
 assert server_retry.destination_connection_id == b""
 assert server_retry.source_connection_id_length == 8
-assert server_retry.source_connection_id == unhexlify("f067a5502a4262b5")
+assert server_retry.source_connection_id == SCID
 assert server_retry.retry_token == unhexlify("746f6b656e")
 assert server_retry.retry_integrity_tag == unhexlify("59756519dd6cc85bd90e33a934d2ff85")
