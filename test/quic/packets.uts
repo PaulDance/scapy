@@ -3,7 +3,8 @@
 + Parse Initial and Retry packets
 = Parse client Initial packet
 from binascii import unhexlify
-from scapy.layers.quic.packets import *
+from scapy.layers.quic import QUIC_VERSION
+from scapy.layers.quic.packets import QuicInitial, QuicRetry
 
 client_initial = QuicInitial(unhexlify(
     "c3ff000020088394c8f03e5157080000449e00000002060040f1010000ed0303"

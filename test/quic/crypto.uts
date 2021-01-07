@@ -3,7 +3,7 @@
 + Test initial keys
 =
 from binascii import unhexlify
-from scapy.layers.quic.packets import QUIC_VERSION
+from scapy.layers.quic import QUIC_VERSION
 from scapy.layers.quic.crypto import (
     LABEL_CLIENT, LABEL_SERVER, LABEL_AEAD_KEY,
     LABEL_IV, LABEL_HP, get_initial_salt, QuicHkdf
