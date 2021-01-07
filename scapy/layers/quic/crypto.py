@@ -7,8 +7,8 @@ from cryptography.hazmat.primitives.ciphers.algorithms import AES
 from cryptography.hazmat.primitives.ciphers.modes import ECB
 from cryptography.hazmat.primitives.hashes import SHA256
 
-from scapy.layers.quic.packets import QUIC_VERSION, MAX_PACKET_NUMBER_LEN, \
-    PacketNumberInterface, QuicInitial
+from scapy.layers.quic import QUIC_VERSION
+from scapy.layers.quic.packets import MAX_PACKET_NUMBER_LEN, PacketNumberInterface, QuicInitial
 from scapy.layers.tls.crypto.cipher_aead import _AEADCipher_TLS13, \
     Cipher_AES_128_GCM_TLS13, Cipher_AES_128_CCM_TLS13, Cipher_AES_128_CCM_8_TLS13, \
     Cipher_AES_256_GCM_TLS13, Cipher_CHACHA20_POLY1305, Cipher_CHACHA20_POLY1305_TLS13
@@ -273,7 +273,7 @@ def header_protection(pkt: PacketNumberInterface, mask: bytes) -> bytes:
                            ^ int.from_bytes(mask[1: pn_len + 1], "big")).to_bytes(pn_len, "big")
     header = no_pl.build()
     return (header[0] ^ mask[0] & 0x0f if header[0] & 0x80 == 0x80 else 0x1f) \
-        .to_bytes(1, "big") + header[1:]
+               .to_bytes(1, "big") + header[1:]
 
 
 def encrypt_packet(pkt: PacketNumberInterface, secret: bytes,
