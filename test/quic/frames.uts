@@ -52,6 +52,10 @@ assert server_initial_ack_frame.largest_acknowledged == 0
 assert server_initial_ack_frame.ack_delay == 0
 assert server_initial_ack_frame.ack_range_count == 0
 assert server_initial_ack_frame.first_ack_range == 0
+assert server_initial_ack_frame.ack_ranges is None
+assert server_initial_ack_frame.ect0_count is None
+assert server_initial_ack_frame.ect1_count is None
+assert server_initial_ack_frame.ecn_ce_count is None
 
 = Test server initial crypto frame
 server_initial_crypto_frame = server_initial_frames[1]
