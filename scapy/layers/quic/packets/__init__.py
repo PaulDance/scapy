@@ -51,13 +51,22 @@ class QuicLongHeader(CommonBehavior):
         BitEnumField("long_packet_type", None, 2, QUIC_LONG_PACKET_TYPES),
         BitField("type_specific_bits", None, 4),
         XIntField("version", None),
-        BitFieldLenField("destination_connection_id_length", None, 8,
-                         length_of="destination_connection_id"),
-        XStrLenField("destination_connection_id", b"", max_length=20,
-                     length_from=lambda pkt: pkt.destination_connection_id_length),
-        BitFieldLenField("source_connection_id_length", None, 8, length_of="source_connection_id"),
-        XStrLenField("source_connection_id", b"", max_length=20,
-                     length_from=lambda pkt: pkt.source_connection_id_length),
+        BitFieldLenField(
+            "destination_connection_id_length", None,
+            8, length_of="destination_connection_id",
+        ),
+        XStrLenField(
+            "destination_connection_id", b"", max_length=20,
+            length_from=lambda pkt: pkt.destination_connection_id_length,
+        ),
+        BitFieldLenField(
+            "source_connection_id_length", None,
+            8, length_of="source_connection_id",
+        ),
+        XStrLenField(
+            "source_connection_id", b"", max_length=20,
+            length_from=lambda pkt: pkt.source_connection_id_length,
+        ),
     ]
 
 
@@ -83,11 +92,19 @@ class Quic0Rtt(QuicLongHeader, PacketNumberInterface, FrameStorage):
     fields_desc = QuicLongHeader.fields_desc.copy()
     fields_desc[2] = BitEnumField("long_packet_type", 1, 2, QUIC_LONG_PACKET_TYPES)
     fields_desc[3] = BitField("reserved_bits", None, 2)
-    fields_desc.insert(4, BitFieldLenField("packet_number_length", 1, 2, length_of="packet_number"))
+    fields_desc.insert(
+        4,
+        BitFieldLenField(
+            "packet_number_length", 1,
+            2, length_of="packet_number",
+        ),
+    )
     fields_desc.extend([
         QuicVarLenField("length", None),
-        XStrLenField("packet_number", b"",
-                     length_from=PacketNumberInterface.get_packet_number_length)
+        XStrLenField(
+            "packet_number", b"",
+            length_from=PacketNumberInterface.get_packet_number_length,
+        ),
     ])
 
 
@@ -115,7 +132,13 @@ class QuicInitial(Quic0Rtt):
     fields_desc = Quic0Rtt.fields_desc.copy()
     fields_desc[2] = BitEnumField("long_packet_type", 0, 2, QUIC_LONG_PACKET_TYPES)
     fields_desc.insert(10, QuicVarLenField("token_length", None, length_of="token"))
-    fields_desc.insert(11, XStrLenField("token", b"", length_from=lambda pkt: pkt.token_length))
+    fields_desc.insert(
+        11,
+        XStrLenField(
+            "token", b"",
+            length_from=lambda pkt: pkt.token_length,
+        ),
+    )
 
 
 class QuicHandshake(Quic0Rtt):
@@ -185,13 +208,22 @@ class QuicVersionNegotiation(CommonBehavior):
         BitEnumField("header_form", 1, 1, QUIC_HEADER_FORMS),
         BitField("unused", None, 7),
         IntEnumField("version", 0, {0: "0"}),
-        BitFieldLenField("destination_connection_id_length", None, 8,
-                         length_of="destination_connection_id"),
-        XStrLenField("destination_connection_id", b"", max_length=255,
-                     length_from=lambda pkt: pkt.destination_connection_id_length),
-        BitFieldLenField("source_connection_id_length", None, 8, length_of="source_connection_id"),
-        XStrLenField("source_connection_id", b"", max_length=255,
-                     length_from=lambda pkt: pkt.source_connection_id_length),
+        BitFieldLenField(
+            "destination_connection_id_length", None,
+            8, length_of="destination_connection_id",
+        ),
+        XStrLenField(
+            "destination_connection_id", b"", max_length=255,
+            length_from=lambda pkt: pkt.destination_connection_id_length,
+        ),
+        BitFieldLenField(
+            "source_connection_id_length", None,
+            8, length_of="source_connection_id",
+        ),
+        XStrLenField(
+            "source_connection_id", b"", max_length=255,
+            length_from=lambda pkt: pkt.source_connection_id_length,
+        ),
         FieldListField("supported_versions", None, XIntField("", None)),
     ]
 
@@ -218,14 +250,20 @@ class QuicShortHeader(PacketNumberInterface, FrameStorage):
         BitField("reserved_bits", None, 2),
         BitField("key_phase", None, 1),
         BitFieldLenField("packet_number_length", 1, 2, length_of="packet_number"),
-        XStrLenField("destination_connection_id", b"", max_length=20,
-                     length_from=lambda pkt: pkt.get_destination_connection_id_length()),
-        XStrLenField("packet_number", b"",
-                     length_from=PacketNumberInterface.get_packet_number_length)
+        XStrLenField(
+            "destination_connection_id", b"", max_length=20,
+            length_from=lambda pkt: pkt.get_destination_connection_id_length(),
+        ),
+        XStrLenField(
+            "packet_number", b"",
+            length_from=PacketNumberInterface.get_packet_number_length,
+        ),
     ]
 
     # TODO: change when we know what to do here.
     def get_destination_connection_id_length(self) -> int:
-        return min(20,
-                   len(self.original) - len(self.payload)
-                   - self.get_packet_number_length() - 1)
+        return min(
+            20,
+            len(self.original) - len(self.payload)
+            - self.get_packet_number_length() - 1,
+        )

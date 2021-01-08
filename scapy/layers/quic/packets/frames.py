@@ -88,7 +88,10 @@ class AckFrame(FrameStorage):
         QuicVarLenField("ack_range_count", None),
         QuicVarLenField("first_ack_range", None),
         ConditionalField(
-            XStrLenField("ack_ranges", 0, length_from=lambda pkt: pkt.first_ack_range),
+            XStrLenField(
+                "ack_ranges", 0,
+                length_from=lambda pkt: pkt.first_ack_range,
+            ),
             lambda pkt: pkt.first_ack_range != 0,
         ),
         ConditionalField(
