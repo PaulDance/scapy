@@ -45,6 +45,7 @@ assert len(server_initial_frames) == 2
 
 = Test server initial ack frame
 server_initial_ack_frame = server_initial_frames[0]
+assert type(server_initial_ack_frame) == AckFrame
 assert server_initial_ack_frame.largest_acknowledged == 0
 assert server_initial_ack_frame.ack_delay == 0
 assert server_initial_ack_frame.ack_range_count == 0
@@ -52,6 +53,7 @@ assert server_initial_ack_frame.first_ack_range == 0
 
 = Test server initial crypto frame
 server_initial_crypto_frame = server_initial_frames[1]
+assert type(server_initial_crypto_frame) == CryptoFrame
 assert server_initial_crypto_frame.offset == 0
 assert server_initial_crypto_frame.length == 90
 assert server_initial_crypto_frame.crypto_data == unhexlify(
