@@ -169,7 +169,45 @@ class StreamFrame(FrameStorage):
       Stream Data (..),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    OFF_BIT = 2
+    LEN_BIT = 1
+    FIN_BIT = 0
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("stream_id", None),
+        ConditionalField(
+            QuicVarLenField("offset", None),
+            lambda pkt: pkt.has_off_bit(),
+        ),
+        ConditionalField(
+            QuicVarLenField("length", None),
+            lambda pkt: pkt.has_len_bit(),
+        ),
+        XStrLenField(
+            "stream_data", b"",
+            length_from=lambda pkt: pkt.length if pkt.length is not None else 2 ** 64,
+        ),
+    ]
+
+    def get_type_bit(self, pos: int) -> int:
+        return self.frame_type >> pos & 1
+
+    def get_off_bit(self) -> int:
+        return self.get_type_bit(StreamFrame.OFF_BIT)
+
+    def get_len_bit(self) -> int:
+        return self.get_type_bit(StreamFrame.LEN_BIT)
+
+    def get_fin_bit(self) -> int:
+        return self.get_type_bit(StreamFrame.FIN_BIT)
+
+    def has_off_bit(self) -> bool:
+        return self.get_off_bit() == 1
+
+    def has_len_bit(self) -> bool:
+        return self.get_len_bit() == 1
+
+    def has_fin_bit(self) -> bool:
+        return self.get_fin_bit() == 1
 
 
 class MaxDataFrame(FrameStorage):
