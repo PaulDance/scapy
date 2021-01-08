@@ -197,7 +197,9 @@ class MaxStreamsFrame(FrameStorage):
       Maximum Streams (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("maximum_streams", None),
+    ]
 
 
 class DataBlockedFrame(FrameStorage):
