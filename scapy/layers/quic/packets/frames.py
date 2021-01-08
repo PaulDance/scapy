@@ -18,30 +18,25 @@ class FrameType(CommonBehavior):
     ]
 
 
-class QuicFrame(CommonBehavior):
-    def guess_payload_class(self, payload: bytes) -> Type[Packet]:
-        return QUIC_FRAME_TYPES[FrameType(payload).frame_type]
-
-
 class FrameStorage(CommonBehavior):
     """
     Represents a packet capable of storing a linked-list of frames.
     """
 
     def guess_payload_class(self, payload: bytes) -> Type[Packet]:
-        return QuicFrame
+        return QUIC_FRAME_TYPES.get(FrameType(payload).frame_type, None)
 
-    def get_frames(self) -> List[QuicFrame]:
+    def get_frames(self) -> List['FrameStorage']:
         frames = []
-        self.payload.payload.get_frames_fill(frames)
+        self.payload.get_frames_fill(frames)
         return frames
 
-    def get_frames_fill(self, frames: List[QuicFrame]) -> None:
+    def get_frames_fill(self, frames: List['FrameStorage']) -> None:
         if not isinstance(self, NoPayload):
             frames.append(self.without_payload())
 
-            if not isinstance(self.payload.payload, NoPayload):
-                self.payload.payload.get_frames_fill(frames)
+            if not isinstance(self.payload, NoPayload):
+                self.payload.get_frames_fill(frames)
 
 
 class PaddingFrame(FrameStorage):
