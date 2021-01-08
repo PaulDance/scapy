@@ -174,6 +174,7 @@ class QuicAead(object):
     Tuple of cipher suites valid for QUIC: all cipher suites defined in TLS1.3
     aside from TLS_AES_128_CCM_8_SHA256.
     """
+    __slots__ = ("cipher",)
 
     def __init__(self, key: bytes, iv: bytes,
                  cipher_suite: Type[_AEADCipher_TLS13]):
