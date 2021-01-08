@@ -230,7 +230,7 @@ class StreamsBlockedFrame(FrameStorage):
       Maximum Streams (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = MaxStreamsFrame.fields_desc.copy()
 
 
 class NewConnectionIdFrame(FrameStorage):
