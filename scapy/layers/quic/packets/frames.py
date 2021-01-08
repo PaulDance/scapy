@@ -20,18 +20,31 @@ class FrameType(CommonBehavior):
 
 class FrameStorage(CommonBehavior):
     """
-    Represents a packet capable of storing a linked-list of frames.
+    Represents a packet capable of storing a linked list of frames.
     """
 
     def guess_payload_class(self, payload: bytes) -> Type[Packet]:
         return QUIC_FRAME_TYPES.get(FrameType(payload).frame_type, None)
 
     def get_frames(self) -> List['FrameStorage']:
+        """
+        Simpler getter for frames instead of the linked list parsing result.
+
+        :return: The array of frames contained in the packet's payload.
+        :rtype: List[FrameStorage]
+        """
         frames = []
         self.payload.get_frames_fill(frames)
         return frames
 
     def get_frames_fill(self, frames: List['FrameStorage']) -> None:
+        """
+        Recursive "back-end" for `get_frames`: appends frames to the given list.
+
+        :param frames: The extensible array to fill up with parsed frames.
+        :type frames: List[FrameStorage]
+        :rtype: None
+        """
         if not isinstance(self, NoPayload):
             frames.append(self.without_payload())
 
