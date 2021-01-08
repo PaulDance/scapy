@@ -1,6 +1,6 @@
 from typing import Type, List
 
-from scapy.fields import XStrLenField
+from scapy.fields import XStrLenField, ConditionalField
 from scapy.layers.quic.packets.common import CommonBehavior
 from scapy.layers.quic.packets.fields import QuicVarLenField
 from scapy.packet import Packet, NoPayload
@@ -70,7 +70,7 @@ class AckFrame(FrameStorage):
       ACK Delay (i),
       ACK Range Count (i),
       First ACK Range (i),
-      ACK Range (..) ...,
+      ACK Ranges (..) ...,
       [ECN Counts (..)],
     }
     """
@@ -79,8 +79,22 @@ class AckFrame(FrameStorage):
         QuicVarLenField("ack_delay", None),
         QuicVarLenField("ack_range_count", None),
         QuicVarLenField("first_ack_range", None),
-        # ACK Range (..) ...,
-        # [ECN Counts (..)],
+        ConditionalField(
+            XStrLenField("ack_ranges", 0, length_from=lambda pkt: pkt.first_ack_range),
+            lambda pkt: pkt.first_ack_range != 0,
+        ),
+        ConditionalField(
+            QuicVarLenField("ect0_count", None),
+            lambda pkt: pkt.frame_type == 0x3,
+        ),
+        ConditionalField(
+            QuicVarLenField("ect1_count", None),
+            lambda pkt: pkt.frame_type == 0x3,
+        ),
+        ConditionalField(
+            QuicVarLenField("ecn_ce_count", None),
+            lambda pkt: pkt.frame_type == 0x3,
+        ),
     ]
 
 
