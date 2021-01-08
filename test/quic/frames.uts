@@ -1,0 +1,61 @@
+% Tests for QUIC frames
+~ parsing
++ Check client initial frames
+=
+from binascii import unhexlify
+from scapy.layers.quic.packets import QuicInitial
+from scapy.layers.quic.packets.frames import CryptoFrame, AckFrame
+from test.quic import CLIENT_INITIAL_BYTES, SERVER_INITIAL_BYTES
+
+= Parse client initial
+client_initial = QuicInitial(CLIENT_INITIAL_BYTES)
+
+= Get client initial frames
+client_initial_frames = client_initial.get_frames()
+
+= Test client initial frames
+assert len(client_initial_frames) == 1
+
+= Test client initial crypto frame
+client_initial_crypto_frame = client_initial_frames[0]
+assert type(client_initial_crypto_frame) == CryptoFrame
+assert client_initial_crypto_frame.offset == 0
+assert client_initial_crypto_frame.length == 241
+assert client_initial_crypto_frame.crypto_data == unhexlify(
+    "010000ed0303ebf8fa56f12939b9584a3896472ec40bb863cfd3e86804fe3a47"
+    "f06a2b69484c00000413011302010000c000000010000e00000b6578616d706c"
+    "652e636f6dff01000100000a00080006001d0017001800100007000504616c70"
+    "6e000500050100000000003300260024001d00209370b2c9caa47fbabaf4559f"
+    "edba753de171fa71f50f1ce15d43e994ec74d748002b0003020304000d001000"
+    "0e0403050306030203080408050806002d00020101001c000240010039003204"
+    "08ffffffffffffffff05048000ffff07048000ffff0801100104800075300901"
+    "100f088394c8f03e51570806048000ffff"
+)
+
+
++ Check server initial frames
+= Parse server initial
+server_initial = QuicInitial(SERVER_INITIAL_BYTES)
+
+= Get server initial frames
+server_initial_frames = server_initial.get_frames()
+
+= Test server initial frames
+assert len(server_initial_frames) == 2
+
+= Test server initial ack frame
+server_initial_ack_frame = server_initial_frames[0]
+assert server_initial_ack_frame.largest_acknowledged == 0
+assert server_initial_ack_frame.ack_delay == 0
+assert server_initial_ack_frame.ack_range_count == 0
+assert server_initial_ack_frame.first_ack_range == 0
+
+= Test server initial crypto frame
+server_initial_crypto_frame = server_initial_frames[1]
+assert server_initial_crypto_frame.offset == 0
+assert server_initial_crypto_frame.length == 90
+assert server_initial_crypto_frame.crypto_data == unhexlify(
+    "020000560303eefce7f7b37ba1d1632e96677825ddf73988cfc79825df566dc5"
+    "430b9a045a1200130100002e00330024001d00209d3c940d89690b84d08a6099"
+    "3c144eca684d1081287c834d5311bcf32bb9da1a002b00020304"
+)
