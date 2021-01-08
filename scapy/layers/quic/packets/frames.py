@@ -285,12 +285,23 @@ class ConnectionCloseFrame(FrameStorage):
     CONNECTION_CLOSE Frame {
       Type (i) = 0x1c..0x1d,
       Error Code (i),
-      [Frame Type (i)],
+      [Error Frame Type (i)],
       Reason Phrase Length (i),
       Reason Phrase (..),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("error_code", None),
+        ConditionalField(
+            QuicVarLenField("error_frame_type", None),
+            lambda pkt: pkt.frame_type == 0x1c,
+        ),
+        QuicVarLenField("reason_phrase_length", None, length_of="reason_phrase"),
+        XStrLenField(
+            "reason_phrase", b"",
+            length_from=lambda pkt: pkt.reason_phrase_length,
+        ),
+    ]
 
 
 class HandshakeDoneFrame(FrameStorage):
