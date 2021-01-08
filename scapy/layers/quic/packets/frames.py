@@ -6,7 +6,7 @@ from scapy.layers.quic.packets.fields import QuicVarLenField
 from scapy.packet import Packet, NoPayload
 
 
-class QuicFrame(CommonBehavior):
+class FrameType(CommonBehavior):
     """
     Frame {
       Frame Type (i),
@@ -17,8 +17,10 @@ class QuicFrame(CommonBehavior):
         QuicVarLenField("frame_type", None),
     ]
 
+
+class QuicFrame(CommonBehavior):
     def guess_payload_class(self, payload: bytes) -> Type[Packet]:
-        return QUIC_FRAME_TYPES[self.frame_type]
+        return QUIC_FRAME_TYPES[FrameType(payload).frame_type]
 
 
 class FrameStorage(CommonBehavior):
@@ -48,6 +50,7 @@ class PaddingFrame(FrameStorage):
       Type (i) = 0x00,
     }
     """
+    fields_desc = FrameType.fields_desc.copy()
 
 
 class PingFrame(FrameStorage):
@@ -56,6 +59,7 @@ class PingFrame(FrameStorage):
       Type (i) = 0x01,
     }
     """
+    fields_desc = FrameType.fields_desc.copy()
 
 
 class AckFrame(FrameStorage):
@@ -70,7 +74,7 @@ class AckFrame(FrameStorage):
       [ECN Counts (..)],
     }
     """
-    fields_desc = [
+    fields_desc = FrameType.fields_desc.copy() + [
         QuicVarLenField("largest_acknowledged", None),
         QuicVarLenField("ack_delay", None),
         QuicVarLenField("ack_range_count", None),
@@ -89,6 +93,7 @@ class ResetStreamFrame(FrameStorage):
       Final Size (i),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class StopSendingFrame(FrameStorage):
@@ -99,6 +104,7 @@ class StopSendingFrame(FrameStorage):
       Application Protocol Error Code (i),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class CryptoFrame(FrameStorage):
@@ -110,7 +116,7 @@ class CryptoFrame(FrameStorage):
       Crypto Data (..),
     }
     """
-    fields_desc = [
+    fields_desc = FrameType.fields_desc.copy() + [
         QuicVarLenField("offset", None),
         QuicVarLenField("length", None, length_of="crypto_data"),
         XStrLenField("crypto_data", b"", length_from=lambda pkt: pkt.length),
@@ -125,6 +131,7 @@ class NewTokenFrame(FrameStorage):
       Token (..),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class StreamFrame(FrameStorage):
@@ -137,6 +144,7 @@ class StreamFrame(FrameStorage):
       Stream Data (..),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class MaxDataFrame(FrameStorage):
@@ -146,6 +154,7 @@ class MaxDataFrame(FrameStorage):
       Maximum Data (i),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class MaxStreamDataFrame(FrameStorage):
@@ -156,6 +165,7 @@ class MaxStreamDataFrame(FrameStorage):
       Maximum Stream Data (i),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class MaxStreamsFrame(FrameStorage):
@@ -165,6 +175,7 @@ class MaxStreamsFrame(FrameStorage):
       Maximum Streams (i),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class DataBlockedFrame(FrameStorage):
@@ -174,6 +185,7 @@ class DataBlockedFrame(FrameStorage):
       Maximum Data (i),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class StreamDataBlockedFrame(FrameStorage):
@@ -184,6 +196,7 @@ class StreamDataBlockedFrame(FrameStorage):
       Maximum Stream Data (i),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class StreamsBlockedFrame(FrameStorage):
@@ -193,6 +206,7 @@ class StreamsBlockedFrame(FrameStorage):
       Maximum Streams (i),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class NewConnectionIdFrame(FrameStorage):
@@ -206,6 +220,7 @@ class NewConnectionIdFrame(FrameStorage):
       Stateless Reset Token (128),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class RetireConnectionIdFrame(FrameStorage):
@@ -215,6 +230,7 @@ class RetireConnectionIdFrame(FrameStorage):
       Sequence Number (i),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class PathChallengeFrame(FrameStorage):
@@ -224,6 +240,7 @@ class PathChallengeFrame(FrameStorage):
       Data (64),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class PathResponseFrame(FrameStorage):
@@ -233,6 +250,7 @@ class PathResponseFrame(FrameStorage):
       Data (64),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class ConnectionCloseFrame(FrameStorage):
@@ -245,6 +263,7 @@ class ConnectionCloseFrame(FrameStorage):
       Reason Phrase (..),
     }
     """
+    fields_desc = FrameType.fields_desc.copy() + []
 
 
 class HandshakeDoneFrame(FrameStorage):
@@ -253,6 +272,7 @@ class HandshakeDoneFrame(FrameStorage):
       Type (i) = 0x1e,
     }
     """
+    fields_desc = FrameType.fields_desc.copy()
 
 
 QUIC_FRAME_TYPES = {
