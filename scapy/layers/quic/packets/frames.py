@@ -1,6 +1,6 @@
 from typing import Type, List
 
-from scapy.fields import XStrLenField, ConditionalField
+from scapy.fields import XStrLenField, ConditionalField, XStrFixedLenField
 from scapy.layers.quic.packets.common import CommonBehavior
 from scapy.layers.quic.packets.fields import QuicVarLenField
 from scapy.packet import Packet, NoPayload
@@ -115,7 +115,11 @@ class ResetStreamFrame(FrameStorage):
       Final Size (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("stream_id", None),
+        QuicVarLenField("application_protocol_error_code", None),
+        QuicVarLenField("final_size", None),
+    ]
 
 
 class StopSendingFrame(FrameStorage):
@@ -126,7 +130,10 @@ class StopSendingFrame(FrameStorage):
       Application Protocol Error Code (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("stream_id", None),
+        QuicVarLenField("application_protocol_error_code", None),
+    ]
 
 
 class CryptoFrame(FrameStorage):
@@ -153,7 +160,10 @@ class NewTokenFrame(FrameStorage):
       Token (..),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("token_length", None, length_of="token"),
+        XStrLenField("token", b"", length_from="token_length")
+    ]
 
 
 class StreamFrame(FrameStorage):
@@ -176,7 +186,9 @@ class MaxDataFrame(FrameStorage):
       Maximum Data (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("maximum_data", None),
+    ]
 
 
 class MaxStreamDataFrame(FrameStorage):
@@ -187,7 +199,10 @@ class MaxStreamDataFrame(FrameStorage):
       Maximum Stream Data (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("stream_id", None),
+        QuicVarLenField("maximum_stream_data", None),
+    ]
 
 
 class MaxStreamsFrame(FrameStorage):
@@ -197,7 +212,9 @@ class MaxStreamsFrame(FrameStorage):
       Maximum Streams (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("maximum_streams", None), #pas sûr car la max value contenu est à 2^60 contenu, ce qui excède celle d'un int, dépend de la plateforme
+    ]
 
 
 class DataBlockedFrame(FrameStorage):
@@ -207,7 +224,9 @@ class DataBlockedFrame(FrameStorage):
       Maximum Data (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("maximum_data", None),
+    ]
 
 
 class StreamDataBlockedFrame(FrameStorage):
@@ -218,7 +237,10 @@ class StreamDataBlockedFrame(FrameStorage):
       Maximum Stream Data (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("stream_id", None),
+        QuicVarLenField("maximum_stream_data", None),
+    ]
 
 
 class StreamsBlockedFrame(FrameStorage):
@@ -228,7 +250,9 @@ class StreamsBlockedFrame(FrameStorage):
       Maximum Streams (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("maximum_streams", None), # meme interrogation sur la valeur max stockage
+    ]
 
 
 class NewConnectionIdFrame(FrameStorage):
@@ -242,7 +266,14 @@ class NewConnectionIdFrame(FrameStorage):
       Stateless Reset Token (128),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("sequence_number", None),
+        QuicVarLenField("retire_prior_to", None),
+        QuicVarLenField("length", None, length_of="connection_id"),
+        XStrLenField("destination_connection_id", b"", max_length=255,
+                     length_from="length"),
+        XStrFixedLenField("retry_integrity_tag", None, 128),
+    ]
 
 
 class RetireConnectionIdFrame(FrameStorage):
@@ -252,7 +283,9 @@ class RetireConnectionIdFrame(FrameStorage):
       Sequence Number (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        QuicVarLenField("sequence_number", None),
+    ]
 
 
 class PathChallengeFrame(FrameStorage):
@@ -262,7 +295,9 @@ class PathChallengeFrame(FrameStorage):
       Data (64),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        XStrFixedLenField("data", None, 64),
+    ]
 
 
 class PathResponseFrame(FrameStorage):
@@ -272,7 +307,9 @@ class PathResponseFrame(FrameStorage):
       Data (64),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + []
+    fields_desc = FrameType.fields_desc.copy() + [
+        XStrFixedLenField("data", None, 64),
+    ]
 
 
 class ConnectionCloseFrame(FrameStorage):
@@ -295,6 +332,11 @@ class HandshakeDoneFrame(FrameStorage):
     }
     """
     fields_desc = FrameType.fields_desc.copy()
+
+
+"""
+Extension frame ?
+"""
 
 
 QUIC_FRAME_TYPES = {
