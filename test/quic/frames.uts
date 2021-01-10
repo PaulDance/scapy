@@ -104,3 +104,19 @@ for padding_frame in padding_frames:
     assert type(padding_frame) == PaddingFrame
     assert padding_frame.frame_type == 0
     assert padding_frame.payload == NoPayload()
+
+
++ Ping frame single byte
+= Parse one one byte
+from scapy.layers.quic.packets.frames import PingFrame
+one_ping = FrameStorage(unhexlify("01"))
+
+= Check only one frame
+ping_frames = one_ping.get_frames()
+assert len(ping_frames) == 1
+
+= Check that one ping frame
+ping_frame = ping_frames[0]
+assert type(ping_frame) == PingFrame
+assert ping_frame.frame_type == 1
+assert ping_frame.payload == NoPayload()
