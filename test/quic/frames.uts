@@ -72,3 +72,35 @@ assert server_initial_crypto_frame.crypto_data == unhexlify(
     "3c144eca684d1081287c834d5311bcf32bb9da1a002b00020304"
 )
 assert server_initial_crypto_frame.payload == NoPayload()
+
+
++ Padding frame single byte
+= Parse one zero byte
+from scapy.layers.quic.packets.frames import FrameStorage, PaddingFrame
+one_padding = FrameStorage(unhexlify("00"))
+
+= Check only one frame
+padding_frames = one_padding.get_frames()
+assert len(padding_frames) == 1
+
+= Check that one padding frame
+padding_frame = padding_frames[0]
+assert type(padding_frame) == PaddingFrame
+assert padding_frame.frame_type == 0
+assert padding_frame.payload == NoPayload()
+
+
++ Padding frames many bytes
+= Parse many zero bytes
+size = 100
+padding = FrameStorage(b"\x00" * size)
+
+= Check correct amount of frames
+padding_frames = padding.get_frames()
+assert len(padding_frames) == size
+
+= Check these padding frames
+for padding_frame in padding_frames:
+    assert type(padding_frame) == PaddingFrame
+    assert padding_frame.frame_type == 0
+    assert padding_frame.payload == NoPayload()
