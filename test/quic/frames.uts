@@ -74,7 +74,7 @@ assert server_initial_crypto_frame.crypto_data == unhexlify(
 assert server_initial_crypto_frame.payload == NoPayload()
 
 
-+ Padding frame single byte
++ Padding frame, case 1: single byte
 = Parse one zero byte
 from scapy.layers.quic.packets.frames import FrameStorage, PaddingFrame
 one_padding = FrameStorage(unhexlify("00"))
@@ -90,7 +90,7 @@ assert padding_frame.frame_type == 0
 assert padding_frame.payload == NoPayload()
 
 
-+ Padding frames many bytes
++ Padding frame, case 2: many bytes
 = Parse many zero bytes
 size = 100
 padding = FrameStorage(b"\x00" * size)
@@ -106,7 +106,7 @@ for padding_frame in padding_frames:
     assert padding_frame.payload == NoPayload()
 
 
-+ Ping frame single byte
++ Ping frame, case 1: single byte
 = Parse one one byte
 from scapy.layers.quic.packets.frames import PingFrame
 one_ping = FrameStorage(unhexlify("01"))
