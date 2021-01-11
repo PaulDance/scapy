@@ -856,3 +856,22 @@ assert connection_close_frame.payload == NoPayload()
 
 = Check build equal to start bytes
 assert connection_close_frame.build() == frame_bytes
+
+
++ Handshake done frame, case 1: single byte
+= Parse the byte
+from scapy.layers.quic.packets.frames import HandshakeDoneFrame
+storage = FrameStorage(b"\x1e")
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+handshake_done_frame = frames[0]
+assert type(handshake_done_frame) == HandshakeDoneFrame
+assert handshake_done_frame.frame_type == 0x1e
+assert handshake_done_frame.payload == NoPayload()
+
+= Check build equal to start byte
+assert handshake_done_frame.build() == b"\x1e"
