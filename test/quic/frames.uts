@@ -77,10 +77,10 @@ assert server_initial_crypto_frame.payload == NoPayload()
 + Padding frame, case 1: single byte
 = Parse one zero byte
 from scapy.layers.quic.packets.frames import FrameStorage, PaddingFrame
-one_padding = FrameStorage(unhexlify("00"))
+storage = FrameStorage(unhexlify("00"))
 
 = Check only one frame
-padding_frames = one_padding.get_frames()
+padding_frames = storage.get_frames()
 assert len(padding_frames) == 1
 
 = Check that one padding frame
@@ -93,10 +93,10 @@ assert padding_frame.payload == NoPayload()
 + Padding frame, case 2: many bytes
 = Parse many zero bytes
 size = 100
-padding = FrameStorage(b"\x00" * size)
+storage = FrameStorage(b"\x00" * size)
 
 = Check correct amount of frames
-padding_frames = padding.get_frames()
+padding_frames = storage.get_frames()
 assert len(padding_frames) == size
 
 = Check these padding frames
@@ -109,10 +109,10 @@ for padding_frame in padding_frames:
 + Ping frame, case 1: single byte
 = Parse one one byte
 from scapy.layers.quic.packets.frames import PingFrame
-one_ping = FrameStorage(unhexlify("01"))
+storage = FrameStorage(unhexlify("01"))
 
 = Check only one frame
-ping_frames = one_ping.get_frames()
+ping_frames = storage.get_frames()
 assert len(ping_frames) == 1
 
 = Check that one ping frame
@@ -126,10 +126,10 @@ assert ping_frame.payload == NoPayload()
 = Parse the bytes
 from scapy.layers.quic.packets.frames import AckFrame
 frame_bytes = unhexlify("0200000000")
-one_ack = FrameStorage(frame_bytes)
+storage = FrameStorage(frame_bytes)
 
 = Check only one frame
-frames = one_ack.get_frames()
+frames = storage.get_frames()
 assert len(frames) == 1
 
 = Check that one ack frame
@@ -160,10 +160,10 @@ frame_bytes = unhexlify(
     + "0f"
     + "00" * 0xf
 )
-one_ack = FrameStorage(frame_bytes)
+storage = FrameStorage(frame_bytes)
 
 = Check only one frame
-frames = one_ack.get_frames()
+frames = storage.get_frames()
 assert len(frames) == 1
 
 = Check that one ack frame
@@ -187,10 +187,10 @@ assert ack_frame.build() == frame_bytes
 + Ack frame, case 3: type 0x03, just zero bytes
 = Parse the bytes
 frame_bytes = unhexlify("0300000000000000")
-one_ack = FrameStorage(frame_bytes)
+storage = FrameStorage(frame_bytes)
 
 = Check only one frame
-frames = one_ack.get_frames()
+frames = storage.get_frames()
 assert len(frames) == 1
 
 = Check that one ack frame
@@ -224,10 +224,10 @@ frame_bytes = unhexlify(
     + "4678"
     + "8f123456"
 )
-one_ack = FrameStorage(frame_bytes)
+storage = FrameStorage(frame_bytes)
 
 = Check only one frame
-frames = one_ack.get_frames()
+frames = storage.get_frames()
 assert len(frames) == 1
 
 = Check that one ack frame
@@ -251,10 +251,10 @@ assert ack_frame.build() == frame_bytes
 + Crypto frame, case 1: just zero bytes
 = Parse the bytes
 frame_bytes = unhexlify("060000")
-crypto = FrameStorage(frame_bytes)
+storage = FrameStorage(frame_bytes)
 
 = Check only one frame
-frames = crypto.get_frames()
+frames = storage.get_frames()
 assert len(frames) == 1
 
 = Check that one frame
@@ -278,10 +278,10 @@ frame_bytes = unhexlify(
     + "4321"
     + "00" * 0x0321
 )
-crypto = FrameStorage(frame_bytes)
+storage = FrameStorage(frame_bytes)
 
 = Check only one frame
-frames = crypto.get_frames()
+frames = storage.get_frames()
 assert len(frames) == 1
 
 = Check that one frame
