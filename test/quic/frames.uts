@@ -4,7 +4,7 @@
 =
 from binascii import unhexlify
 from scapy.layers.quic.packets import QuicInitial
-from scapy.layers.quic.packets.frames import CryptoFrame, AckFrame
+from scapy.layers.quic.packets.frames import PaddingFrame, PingFrame,AckFrame,ResetStreamFrame,StopSendingFrame,CryptoFrame,NewTokenFrame,StreamFrame,MaxDataFrame,MaxStreamsFrame, DataBlockedFrame, StreamDataBlockedFrame, StreamsBlockedFrame, NewConnectionIdFrame,RetireConnectionIdFrame, PathChallengeFrame, PathResponseFrame, ConnectionCloseFrame, HandshakeDoneFrame, FrameStorage
 from test.quic import CLIENT_INITIAL_BYTES, SERVER_INITIAL_BYTES
 
 = Parse client initial
@@ -68,3 +68,89 @@ assert server_initial_crypto_frame.crypto_data == unhexlify(
     "430b9a045a1200130100002e00330024001d00209d3c940d89690b84d08a6099"
     "3c144eca684d1081287c834d5311bcf32bb9da1a002b00020304"
 )
+
+
++ Check ResetStreamFrame
+= Parse series of bytes for ResetStreamFrame
+from scapy.layers.quic.packets.frames import ResetStreamFrame
+frame_bytes = unhexlify("04010203")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one reset stream frame
+reset_stream_frame = frames[0]
+assert type(reset_stream_frame) == ResetStreamFrame
+assert reset_stream_frame.frame_type == 4
+assert reset_stream_frame.stream_id == 1
+assert reset_stream_frame.application_protocol_error_code == 2
+assert reset_stream_frame.final_size == 3
+
+
+= Check build equal to start bytes
+assert reset_stream_frame.build() == frame_bytes
+
+
++ Check StopSendingFrame
+= Parse series of bytes for StopSendingFrame
+from scapy.layers.quic.packets.frames import StopSendingFrame
+frame_bytes = unhexlify("050000")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one stop sending stream frame
+stop_sending_frame_frame = frames[0]
+assert type(stop_sending_frame_frame) == StopSendingFrame
+assert stop_sending_frame_frame.frame_type == 5
+assert stop_sending_frame_frame.stream_id == 0
+assert stop_sending_frame_frame.application_protocol_error_code == 0
+
+= Check build equal to start bytes
+assert stop_sending_frame_frame.build() == frame_bytes
+
+
++ Check NewTokenFrame
+= Parse series of bytes for NewTokenFrame
+from scapy.layers.quic.packets.frames import NewTokenFrame
+frame_bytes = unhexlify("070102")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one new token stream frame
+new_token_frame = frames[0]
+assert type(new_token_frame) == NewTokenFrame
+assert new_token_frame.frame_type == 7
+assert new_token_frame.token_length == 1
+print(new_token_frame.token)
+assert new_token_frame.token == bytes([2])
+
+= Check build equal to start bytes
+assert new_token_frame.build() == frame_bytes
+
++ Check MaxDataFrame
+= Parse series of bytes for MaxDataFrame
+from scapy.layers.quic.packets.frames import MaxDataFrame
+frame_bytes = unhexlify("1002")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one max data frame
+max_data_frame = frames[0]
+assert type(max_data_frame) == MaxDataFrame
+assert max_data_frame.frame_type == 0x10
+assert max_data_frame.maximum_data == 2
+
+= Check build equal to start bytes
+assert max_data_frame.build() == frame_bytes
+

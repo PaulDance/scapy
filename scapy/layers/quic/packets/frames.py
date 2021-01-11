@@ -106,6 +106,7 @@ class AckFrame(FrameStorage):
     ]
 
 
+
 class ResetStreamFrame(FrameStorage):
     """
     RESET_STREAM Frame {
@@ -162,7 +163,7 @@ class NewTokenFrame(FrameStorage):
     """
     fields_desc = FrameType.fields_desc.copy() + [
         QuicVarLenField("token_length", None, length_of="token"),
-        XStrLenField("token", b"", length_from="token_length")
+        XStrLenField("token", b"", length_from=lambda pkt: pkt.token_length)
     ]
 
 
@@ -271,7 +272,7 @@ class NewConnectionIdFrame(FrameStorage):
         QuicVarLenField("retire_prior_to", None),
         QuicVarLenField("length", None, length_of="connection_id"),
         XStrLenField("destination_connection_id", b"", max_length=255,
-                     length_from="length"),
+                     length_from=lambda pkt: pkt.length),
         XStrFixedLenField("retry_integrity_tag", None, 128),
     ]
 
