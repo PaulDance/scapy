@@ -246,3 +246,52 @@ assert ack_frame.payload == NoPayload()
 
 = Check build equal to start bytes
 assert ack_frame.build() == frame_bytes
+
+
++ Crypto frame, case 1: just zero bytes
+= Parse the bytes
+frame_bytes = unhexlify("060000")
+crypto = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = crypto.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+crypto_frame = frames[0]
+assert type(crypto_frame) == CryptoFrame
+assert crypto_frame.frame_type == 0x06
+assert crypto_frame.offset == 0
+assert crypto_frame.length == 0
+assert crypto_frame.crypto_data == b""
+assert crypto_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert crypto_frame.build() == frame_bytes
+
+
++ Crypto frame, case 2: various bytes
+= Parse the bytes
+frame_bytes = unhexlify(
+    "06"
+    + "8fdb9753"
+    + "4321"
+    + "00" * 0x0321
+)
+crypto = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = crypto.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+crypto_frame = frames[0]
+assert type(crypto_frame) == CryptoFrame
+assert crypto_frame.frame_type == 0x06
+assert crypto_frame.offset == 0x0fdb9753
+assert crypto_frame.length == 0x0321
+assert crypto_frame.crypto_data == b"\x00" * 0x0321
+assert crypto_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert crypto_frame.build() == frame_bytes
