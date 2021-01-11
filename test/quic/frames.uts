@@ -295,3 +295,458 @@ assert crypto_frame.payload == NoPayload()
 
 = Check build equal to start bytes
 assert crypto_frame.build() == frame_bytes
+
+
++ Stream frame, case 1: type 0x08 ___, just zero bytes
+= Parse the bytes
+from scapy.layers.quic.packets.frames import StreamFrame
+frame_bytes = unhexlify("0800")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x08
+assert not stream_frame.has_off_bit()
+assert not stream_frame.has_len_bit()
+assert not stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0
+assert stream_frame.offset is None
+assert stream_frame.length is None
+assert stream_frame.stream_data == b""
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 2: type 0x08 ___, various + overflow bytes
+= Parse the bytes
+size = 206
+frame_bytes = unhexlify("0812" + "00" * size)
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x08
+assert not stream_frame.has_off_bit()
+assert not stream_frame.has_len_bit()
+assert not stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0x12
+assert stream_frame.offset is None
+assert stream_frame.length is None
+assert stream_frame.stream_data == b"\x00" * size
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 3: type 0x09 __F, just zero bytes
+= Parse the bytes
+frame_bytes = unhexlify("0900")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x09
+assert not stream_frame.has_off_bit()
+assert not stream_frame.has_len_bit()
+assert stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0
+assert stream_frame.offset is None
+assert stream_frame.length is None
+assert stream_frame.stream_data == b""
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 4: type 0x09 __F, various + overflow bytes
+= Parse the bytes
+size = 253
+frame_bytes = unhexlify("0934" + "00" * size)
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x09
+assert not stream_frame.has_off_bit()
+assert not stream_frame.has_len_bit()
+assert stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0x34
+assert stream_frame.offset is None
+assert stream_frame.length is None
+assert stream_frame.stream_data == b"\x00" * size
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 5: type 0x0a _L_, just zero bytes
+= Parse the bytes
+frame_bytes = unhexlify("0a0000")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0a
+assert not stream_frame.has_off_bit()
+assert stream_frame.has_len_bit()
+assert not stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0
+assert stream_frame.offset is None
+assert stream_frame.length == 0
+assert stream_frame.stream_data == b""
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 6: type 0x0a _L_, various bytes
+= Parse the bytes
+size = 161
+frame_bytes = unhexlify(
+    "0a"
+    + "4567"
+    + "40" + hex(size)[2:]
+    + "00" * size
+)
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0a
+assert not stream_frame.has_off_bit()
+assert stream_frame.has_len_bit()
+assert not stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0x0567
+assert stream_frame.offset is None
+assert stream_frame.length == size
+assert stream_frame.stream_data == b"\x00" * size
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 7: type 0x0b _LF, just zero bytes
+= Parse the bytes
+frame_bytes = unhexlify("0b0000")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0b
+assert not stream_frame.has_off_bit()
+assert stream_frame.has_len_bit()
+assert stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0
+assert stream_frame.offset is None
+assert stream_frame.length == 0
+assert stream_frame.stream_data == b""
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 8: type 0x0b _LF, various bytes
+= Parse the bytes
+size = 152
+frame_bytes = unhexlify(
+    "0b"
+    + "489a"
+    + "40" + hex(size)[2:]
+    + "00" * size
+)
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0b
+assert not stream_frame.has_off_bit()
+assert stream_frame.has_len_bit()
+assert stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0x089a
+assert stream_frame.offset is None
+assert stream_frame.length == size
+assert stream_frame.stream_data == b"\x00" * size
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 9: type 0x0c O__, just zero bytes
+= Parse the bytes
+frame_bytes = unhexlify("0c0000")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0c
+assert stream_frame.has_off_bit()
+assert not stream_frame.has_len_bit()
+assert not stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0
+assert stream_frame.offset == 0
+assert stream_frame.length is None
+assert stream_frame.stream_data == b""
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 10: type 0x0c O__, various + overflow bytes
+= Parse the bytes
+size = 227
+frame_bytes = unhexlify(
+    "0c12"
+    + "23"
+    + "00" * size
+)
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0c
+assert stream_frame.has_off_bit()
+assert not stream_frame.has_len_bit()
+assert not stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0x12
+assert stream_frame.offset == 0x23
+assert stream_frame.length is None
+assert stream_frame.stream_data == b"\x00" * size
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 11: type 0x0d O_F, just zero bytes
+= Parse the bytes
+frame_bytes = unhexlify("0d0000")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0d
+assert stream_frame.has_off_bit()
+assert not stream_frame.has_len_bit()
+assert stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0
+assert stream_frame.offset == 0
+assert stream_frame.length is None
+assert stream_frame.stream_data == b""
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 12: type 0x0d O_F, various + overflow bytes
+= Parse the bytes
+size = 230
+frame_bytes = unhexlify(
+    "0d34"
+    + "4bcd"
+    + "00" * size
+)
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0d
+assert stream_frame.has_off_bit()
+assert not stream_frame.has_len_bit()
+assert stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0x34
+assert stream_frame.offset == 0x0bcd
+assert stream_frame.length is None
+assert stream_frame.stream_data == b"\x00" * size
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 13: type 0x0e OL_, just zero bytes
+= Parse the bytes
+frame_bytes = unhexlify("0e000000")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0e
+assert stream_frame.has_off_bit()
+assert stream_frame.has_len_bit()
+assert not stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0
+assert stream_frame.offset == 0
+assert stream_frame.length == 0
+assert stream_frame.stream_data == b""
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 14: type 0x0e OL_, various bytes
+= Parse the bytes
+size = 57
+frame_bytes = unhexlify(
+    "0e"
+    + "4567"
+    + "82345678"
+    + "40" + hex(size)[2:]
+    + "00" * size
+)
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0e
+assert stream_frame.has_off_bit()
+assert stream_frame.has_len_bit()
+assert not stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0x0567
+assert stream_frame.offset == 0x02345678
+assert stream_frame.length == size
+assert stream_frame.stream_data == b"\x00" * size
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 15: type 0x0f OLF, just zero bytes
+= Parse the bytes
+frame_bytes = unhexlify("0f000000")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0f
+assert stream_frame.has_off_bit()
+assert stream_frame.has_len_bit()
+assert stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0
+assert stream_frame.offset == 0
+assert stream_frame.length == 0
+assert stream_frame.stream_data == b""
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
+
+
++ Stream frame, case 16: type 0x0f OLF, various bytes
+= Parse the bytes
+size = 204
+frame_bytes = unhexlify(
+    "0f"
+    + "489a"
+    + "c123456789abcdef"
+    + "40" + hex(size)[2:]
+    + "00" * size
+)
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+stream_frame = frames[0]
+assert type(stream_frame) == StreamFrame
+assert stream_frame.frame_type == 0x0f
+assert stream_frame.has_off_bit()
+assert stream_frame.has_len_bit()
+assert stream_frame.has_fin_bit()
+assert stream_frame.stream_id == 0x089a
+assert stream_frame.offset == 0x0123456789abcdef
+assert stream_frame.length == size
+assert stream_frame.stream_data == b"\x00" * size
+assert stream_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert stream_frame.build() == frame_bytes
