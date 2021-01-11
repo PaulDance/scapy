@@ -20,7 +20,7 @@ assert len(client_initial_frames) == 1
 = Test client initial crypto frame
 client_initial_crypto_frame = client_initial_frames[0]
 assert type(client_initial_crypto_frame) == CryptoFrame
-assert client_initial_crypto_frame.frame_type == 0x6
+assert client_initial_crypto_frame.frame_type == 0x06
 assert client_initial_crypto_frame.offset == 0
 assert client_initial_crypto_frame.length == 241
 assert client_initial_crypto_frame.crypto_data == unhexlify(
@@ -49,7 +49,7 @@ assert len(server_initial_frames) == 2
 = Test server initial ack frame
 server_initial_ack_frame = server_initial_frames[0]
 assert type(server_initial_ack_frame) == AckFrame
-assert server_initial_ack_frame.frame_type == 0x2
+assert server_initial_ack_frame.frame_type == 0x02
 assert server_initial_ack_frame.largest_acknowledged == 0
 assert server_initial_ack_frame.ack_delay == 0
 assert server_initial_ack_frame.ack_range_count == 0
@@ -63,7 +63,7 @@ assert server_initial_ack_frame.payload == NoPayload()
 = Test server initial crypto frame
 server_initial_crypto_frame = server_initial_frames[1]
 assert type(server_initial_crypto_frame) == CryptoFrame
-assert server_initial_crypto_frame.frame_type == 0x6
+assert server_initial_crypto_frame.frame_type == 0x06
 assert server_initial_crypto_frame.offset == 0
 assert server_initial_crypto_frame.length == 90
 assert server_initial_crypto_frame.crypto_data == unhexlify(
@@ -86,7 +86,7 @@ assert len(padding_frames) == 1
 = Check that one padding frame
 padding_frame = padding_frames[0]
 assert type(padding_frame) == PaddingFrame
-assert padding_frame.frame_type == 0
+assert padding_frame.frame_type == 0x00
 assert padding_frame.payload == NoPayload()
 
 
@@ -102,7 +102,7 @@ assert len(padding_frames) == size
 = Check these padding frames
 for padding_frame in padding_frames:
     assert type(padding_frame) == PaddingFrame
-    assert padding_frame.frame_type == 0
+    assert padding_frame.frame_type == 0x00
     assert padding_frame.payload == NoPayload()
 
 
@@ -118,7 +118,7 @@ assert len(ping_frames) == 1
 = Check that one ping frame
 ping_frame = ping_frames[0]
 assert type(ping_frame) == PingFrame
-assert ping_frame.frame_type == 1
+assert ping_frame.frame_type == 0x01
 assert ping_frame.payload == NoPayload()
 
 
@@ -135,7 +135,7 @@ assert len(frames) == 1
 = Check that one ack frame
 ack_frame = frames[0]
 assert type(ack_frame) == AckFrame
-assert ack_frame.frame_type == 2
+assert ack_frame.frame_type == 0x02
 assert ack_frame.largest_acknowledged == 0
 assert ack_frame.ack_delay == 0
 assert ack_frame.ack_range_count == 0
@@ -169,7 +169,7 @@ assert len(frames) == 1
 = Check that one ack frame
 ack_frame = frames[0]
 assert type(ack_frame) == AckFrame
-assert ack_frame.frame_type == 2
+assert ack_frame.frame_type == 0x02
 assert ack_frame.largest_acknowledged == 0x023f
 assert ack_frame.ack_delay == 0x0c456789
 assert ack_frame.ack_range_count == 0x0f23456789abcdef
@@ -196,7 +196,7 @@ assert len(frames) == 1
 = Check that one ack frame
 ack_frame = frames[0]
 assert type(ack_frame) == AckFrame
-assert ack_frame.frame_type == 3
+assert ack_frame.frame_type == 0x03
 assert ack_frame.largest_acknowledged == 0
 assert ack_frame.ack_delay == 0
 assert ack_frame.ack_range_count == 0
@@ -233,7 +233,7 @@ assert len(frames) == 1
 = Check that one ack frame
 ack_frame = frames[0]
 assert type(ack_frame) == AckFrame
-assert ack_frame.frame_type == 3
+assert ack_frame.frame_type == 0x03
 assert ack_frame.largest_acknowledged == 0x023f
 assert ack_frame.ack_delay == 0x0c456789
 assert ack_frame.ack_range_count == 0x0f23456789abcdef
