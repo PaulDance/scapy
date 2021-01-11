@@ -750,3 +750,109 @@ assert stream_frame.payload == NoPayload()
 
 = Check build equal to start bytes
 assert stream_frame.build() == frame_bytes
+
+
++ Connection close frame, case 1: type 0x1c, just zero bytes
+= Parse the bytes
+from scapy.layers.quic.packets.frames import ConnectionCloseFrame
+frame_bytes = unhexlify("1c000000")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+connection_close_frame = frames[0]
+assert type(connection_close_frame) == ConnectionCloseFrame
+assert connection_close_frame.frame_type == 0x1c
+assert connection_close_frame.error_code == 0
+assert connection_close_frame.error_frame_type == 0
+assert connection_close_frame.reason_phrase_length == 0
+assert connection_close_frame.reason_phrase == b""
+assert connection_close_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert connection_close_frame.build() == frame_bytes
+
+
++ Connection close frame, case 2: type 0x1c, various bytes
+= Parse the bytes
+size = 0x0e
+frame_bytes = unhexlify(
+    "1c"
+    + "4678"
+    + "89876543"
+    + "0e"
+    + "00" * size
+)
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+connection_close_frame = frames[0]
+assert type(connection_close_frame) == ConnectionCloseFrame
+assert connection_close_frame.frame_type == 0x1c
+assert connection_close_frame.error_code == 0x678
+assert connection_close_frame.error_frame_type == 0x09876543
+assert connection_close_frame.reason_phrase_length == size
+assert connection_close_frame.reason_phrase == b"\x00" * size
+assert connection_close_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert connection_close_frame.build() == frame_bytes
+
+
++ Connection close frame, case 3: type 0x1d, just zero bytes
+= Parse the bytes
+frame_bytes = unhexlify("1d0000")
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+connection_close_frame = frames[0]
+assert type(connection_close_frame) == ConnectionCloseFrame
+assert connection_close_frame.frame_type == 0x1d
+assert connection_close_frame.error_code == 0
+assert connection_close_frame.error_frame_type is None
+assert connection_close_frame.reason_phrase_length == 0
+assert connection_close_frame.reason_phrase == b""
+assert connection_close_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert connection_close_frame.build() == frame_bytes
+
+
++ Connection close frame, case 4: type 0x1d, various bytes
+= Parse the bytes
+size = 0x0b
+frame_bytes = unhexlify(
+    "1d"
+    + "4678"
+    + "0b"
+    + "00" * size
+)
+storage = FrameStorage(frame_bytes)
+
+= Check only one frame
+frames = storage.get_frames()
+assert len(frames) == 1
+
+= Check that one frame
+connection_close_frame = frames[0]
+assert type(connection_close_frame) == ConnectionCloseFrame
+assert connection_close_frame.frame_type == 0x1d
+assert connection_close_frame.error_code == 0x678
+assert connection_close_frame.error_frame_type is None
+assert connection_close_frame.reason_phrase_length == size
+assert connection_close_frame.reason_phrase == b"\x00" * size
+assert connection_close_frame.payload == NoPayload()
+
+= Check build equal to start bytes
+assert connection_close_frame.build() == frame_bytes
