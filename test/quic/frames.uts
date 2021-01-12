@@ -357,7 +357,7 @@ new_token_frame = frames[0]
 assert type(new_token_frame) == NewTokenFrame
 assert new_token_frame.frame_type == 7
 assert new_token_frame.token_length == 1
-assert new_token_frame.token == bytes([2])
+assert new_token_frame.token == b"\x02"
 assert new_token_frame.payload == NoPayload()
 
 = Check build equal to start bytes
