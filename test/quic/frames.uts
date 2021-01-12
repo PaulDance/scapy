@@ -282,15 +282,15 @@ frames = storage.get_frames()
 assert len(frames) == 1
 
 = Check that one stop sending stream frame
-stop_sending_frame_frame = frames[0]
-assert type(stop_sending_frame_frame) == StopSendingFrame
-assert stop_sending_frame_frame.frame_type == 5
-assert stop_sending_frame_frame.stream_id == 0
-assert stop_sending_frame_frame.application_protocol_error_code == 0
+stop_sending_frame = frames[0]
+assert type(stop_sending_frame) == StopSendingFrame
+assert stop_sending_frame.frame_type == 5
+assert stop_sending_frame.stream_id == 0
+assert stop_sending_frame.application_protocol_error_code == 0
 assert stop_sending_frame.payload == NoPayload()
 
 = Check build equal to start bytes
-assert stop_sending_frame_frame.build() == frame_bytes
+assert stop_sending_frame.build() == frame_bytes
 
 
 + Crypto frame, case 1: just zero bytes
