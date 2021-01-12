@@ -265,6 +265,7 @@ assert reset_stream_frame.frame_type == 4
 assert reset_stream_frame.stream_id == 1
 assert reset_stream_frame.application_protocol_error_code == 2
 assert reset_stream_frame.final_size == 3
+assert reset_stream_frame.payload == NoPayload()
 
 = Check build equal to start bytes
 assert reset_stream_frame.build() == frame_bytes
@@ -286,6 +287,7 @@ assert type(stop_sending_frame_frame) == StopSendingFrame
 assert stop_sending_frame_frame.frame_type == 5
 assert stop_sending_frame_frame.stream_id == 0
 assert stop_sending_frame_frame.application_protocol_error_code == 0
+assert stop_sending_frame.payload == NoPayload()
 
 = Check build equal to start bytes
 assert stop_sending_frame_frame.build() == frame_bytes
@@ -356,6 +358,7 @@ assert type(new_token_frame) == NewTokenFrame
 assert new_token_frame.frame_type == 7
 assert new_token_frame.token_length == 1
 assert new_token_frame.token == bytes([2])
+assert new_token_frame.payload == NoPayload()
 
 = Check build equal to start bytes
 assert new_token_frame.build() == frame_bytes
@@ -831,6 +834,7 @@ max_data_frame = frames[0]
 assert type(max_data_frame) == MaxDataFrame
 assert max_data_frame.frame_type == 0x10
 assert max_data_frame.maximum_data == 2
+assert max_data_frame.payload == NoPayload()
 
 = Check build equal to start bytes
 assert max_data_frame.build() == frame_bytes
