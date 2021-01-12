@@ -133,10 +133,7 @@ class StopSendingFrame(FrameStorage):
       Application Protocol Error Code (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
-        QuicVarLenField("stream_id", None),
-        QuicVarLenField("application_protocol_error_code", None),
-    ]
+    fields_desc = ResetStreamFrame.fields_desc.copy()[:-1]
 
 
 class CryptoFrame(FrameStorage):
@@ -267,9 +264,7 @@ class DataBlockedFrame(FrameStorage):
       Maximum Data (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
-        QuicVarLenField("maximum_data", None),
-    ]
+    fields_desc = MaxDataFrame.fields_desc.copy()
 
 
 class StreamDataBlockedFrame(FrameStorage):
@@ -280,10 +275,7 @@ class StreamDataBlockedFrame(FrameStorage):
       Maximum Stream Data (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
-        QuicVarLenField("stream_id", None),
-        QuicVarLenField("maximum_stream_data", None),
-    ]
+    fields_desc = MaxStreamDataFrame.fields_desc.copy()
 
 
 class StreamsBlockedFrame(FrameStorage):
@@ -351,9 +343,7 @@ class PathResponseFrame(FrameStorage):
       Data (64),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
-        XStrFixedLenField("data", None, 64),
-    ]
+    fields_desc = PathChallengeFrame.fields_desc.copy()
 
 
 class ConnectionCloseFrame(FrameStorage):
