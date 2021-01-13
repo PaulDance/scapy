@@ -1,6 +1,6 @@
 from typing import Type, List
 
-from scapy.fields import XStrLenField, ConditionalField, XStrFixedLenField
+from scapy.fields import XStrLenField, ConditionalField, XStrFixedLenField, BitField, BitFieldLenField
 from scapy.layers.quic.packets.common import CommonBehavior
 from scapy.layers.quic.packets.fields import QuicVarLenField
 from scapy.packet import Packet, NoPayload
@@ -302,13 +302,16 @@ class NewConnectionIdFrame(FrameStorage):
     fields_desc = FrameType.fields_desc.copy() + [
         QuicVarLenField("sequence_number", None),
         QuicVarLenField("retire_prior_to", None),
-        QuicVarLenField("length", None, length_of="connection_id"),
+        BitFieldLenField(
+            "connection_id_length", None,
+            8, length_of="connection_id",
+        ), # unsigned int of 8 bits long ?
         XStrLenField(
-            "destination_connection_id",
-            b"", max_length=255,
+            "connection_id",
+            b"", max_length=20,
             length_from=lambda pkt: pkt.length,
         ),
-        XStrFixedLenField("retry_integrity_tag", None, 128),
+        XStrFixedLenField("retry_integrity_tag", None, 16),
     ]
 
 
@@ -332,7 +335,7 @@ class PathChallengeFrame(FrameStorage):
     }
     """
     fields_desc = FrameType.fields_desc.copy() + [
-        XStrFixedLenField("data", None, 64),
+        XStrFixedLenField("data", None, 8),
     ]
 
 
