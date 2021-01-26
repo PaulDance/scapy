@@ -1,6 +1,7 @@
-from typing import Type, List
+from typing import Type, List, Optional
 
-from scapy.fields import XStrLenField, ConditionalField, XStrFixedLenField, BitField, BitFieldLenField
+from scapy.fields import XStrLenField, ConditionalField, XStrFixedLenField, \
+    BitFieldLenField, Field
 from scapy.layers.quic.packets.common import CommonBehavior
 from scapy.layers.quic.packets.fields import QuicVarLenField
 from scapy.packet import Packet, NoPayload
@@ -13,9 +14,19 @@ class FrameType(CommonBehavior):
       Type-Dependent Fields (..),
     }
     """
+    FRAME_TYPES = tuple()
     fields_desc = [
         QuicVarLenField("frame_type", None),
     ]
+
+    @classmethod
+    def default_type(cls) -> int:
+        return cls.FRAME_TYPES[0]
+
+    @classmethod
+    def fields_with_type(cls, default_type: Optional[int]) -> List[Field]:
+        return [QuicVarLenField("frame_type", default_type)] \
+               + cls.fields_desc.copy()[1:]
 
 
 class FrameStorage(CommonBehavior):
@@ -52,25 +63,27 @@ class FrameStorage(CommonBehavior):
                 self.payload.get_frames_fill(frames)
 
 
-class PaddingFrame(FrameStorage):
+class PaddingFrame(FrameType, FrameStorage):
     """
     PADDING Frame {
       Type (i) = 0x00,
     }
     """
-    fields_desc = FrameType.fields_desc.copy()
+    FRAME_TYPES = (0x00,)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0])
 
 
-class PingFrame(FrameStorage):
+class PingFrame(FrameType, FrameStorage):
     """
     PING Frame {
       Type (i) = 0x01,
     }
     """
-    fields_desc = FrameType.fields_desc.copy()
+    FRAME_TYPES = (0x01,)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0])
 
 
-class AckFrame(FrameStorage):
+class AckFrame(FrameType, FrameStorage):
     """
     ACK Frame {
       Type (i) = 0x02..0x03,
@@ -82,7 +95,8 @@ class AckFrame(FrameStorage):
       [ECN Counts (..)],
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
+    FRAME_TYPES = (0x02, 0x03)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         QuicVarLenField("largest_acknowledged", None),
         QuicVarLenField("ack_delay", None),
         QuicVarLenField("ack_range_count", None),
@@ -109,7 +123,7 @@ class AckFrame(FrameStorage):
     ]
 
 
-class ResetStreamFrame(FrameStorage):
+class ResetStreamFrame(FrameType, FrameStorage):
     """
     RESET_STREAM Frame {
       Type (i) = 0x04,
@@ -118,14 +132,15 @@ class ResetStreamFrame(FrameStorage):
       Final Size (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
+    FRAME_TYPES = (0x04,)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         QuicVarLenField("stream_id", None),
         QuicVarLenField("application_protocol_error_code", None),
         QuicVarLenField("final_size", None),
     ]
 
 
-class StopSendingFrame(FrameStorage):
+class StopSendingFrame(FrameType, FrameStorage):
     """
     STOP_SENDING Frame {
       Type (i) = 0x05,
@@ -133,10 +148,11 @@ class StopSendingFrame(FrameStorage):
       Application Protocol Error Code (i),
     }
     """
-    fields_desc = ResetStreamFrame.fields_desc.copy()[:-1]
+    FRAME_TYPES = (0x05,)
+    fields_desc = ResetStreamFrame.fields_with_type(FRAME_TYPES[0])[:-1]
 
 
-class CryptoFrame(FrameStorage):
+class CryptoFrame(FrameType, FrameStorage):
     """
     CRYPTO Frame {
       Type (i) = 0x06,
@@ -145,14 +161,15 @@ class CryptoFrame(FrameStorage):
       Crypto Data (..),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
+    FRAME_TYPES = (0x06,)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         QuicVarLenField("offset", None),
         QuicVarLenField("length", None, length_of="crypto_data"),
         XStrLenField("crypto_data", b"", length_from=lambda pkt: pkt.length),
     ]
 
 
-class NewTokenFrame(FrameStorage):
+class NewTokenFrame(FrameType, FrameStorage):
     """
     NEW_TOKEN Frame {
       Type (i) = 0x07,
@@ -160,13 +177,14 @@ class NewTokenFrame(FrameStorage):
       Token (..),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
+    FRAME_TYPES = (0x07,)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         QuicVarLenField("token_length", None, length_of="token"),
         XStrLenField("token", b"", length_from=lambda pkt: pkt.token_length),
     ]
 
 
-class StreamFrame(FrameStorage):
+class StreamFrame(FrameType, FrameStorage):
     """
     STREAM Frame {
       Type (i) = 0x08..0x0f,
@@ -176,10 +194,11 @@ class StreamFrame(FrameStorage):
       Stream Data (..),
     }
     """
+    FRAME_TYPES = tuple(range(0x08, 0x0f + 1))
     OFF_BIT = 2
     LEN_BIT = 1
     FIN_BIT = 0
-    fields_desc = FrameType.fields_desc.copy() + [
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         QuicVarLenField("stream_id", None),
         ConditionalField(
             QuicVarLenField("offset", None),
@@ -219,19 +238,20 @@ class StreamFrame(FrameStorage):
         return self.get_fin_bit() == 1
 
 
-class MaxDataFrame(FrameStorage):
+class MaxDataFrame(FrameType, FrameStorage):
     """
     MAX_DATA Frame {
       Type (i) = 0x10,
       Maximum Data (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
+    FRAME_TYPES = (0x10,)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         QuicVarLenField("maximum_data", None),
     ]
 
 
-class MaxStreamDataFrame(FrameStorage):
+class MaxStreamDataFrame(FrameType, FrameStorage):
     """
     MAX_STREAM_DATA Frame {
       Type (i) = 0x11,
@@ -239,35 +259,38 @@ class MaxStreamDataFrame(FrameStorage):
       Maximum Stream Data (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
+    FRAME_TYPES = (0x11,)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         QuicVarLenField("stream_id", None),
         QuicVarLenField("maximum_stream_data", None),
     ]
 
 
-class MaxStreamsFrame(FrameStorage):
+class MaxStreamsFrame(FrameType, FrameStorage):
     """
     MAX_STREAMS Frame {
       Type (i) = 0x12..0x13,
       Maximum Streams (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
+    FRAME_TYPES = (0x12, 0x13)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         QuicVarLenField("maximum_streams", None),
     ]
 
 
-class DataBlockedFrame(FrameStorage):
+class DataBlockedFrame(FrameType, FrameStorage):
     """
     DATA_BLOCKED Frame {
       Type (i) = 0x14,
       Maximum Data (i),
     }
     """
-    fields_desc = MaxDataFrame.fields_desc.copy()
+    FRAME_TYPES = (0x14,)
+    fields_desc = MaxDataFrame.fields_with_type(FRAME_TYPES[0])
 
 
-class StreamDataBlockedFrame(FrameStorage):
+class StreamDataBlockedFrame(FrameType, FrameStorage):
     """
     STREAM_DATA_BLOCKED Frame {
       Type (i) = 0x15,
@@ -275,20 +298,22 @@ class StreamDataBlockedFrame(FrameStorage):
       Maximum Stream Data (i),
     }
     """
-    fields_desc = MaxStreamDataFrame.fields_desc.copy()
+    FRAME_TYPES = (0x15,)
+    fields_desc = MaxStreamDataFrame.fields_with_type(FRAME_TYPES[0])
 
 
-class StreamsBlockedFrame(FrameStorage):
+class StreamsBlockedFrame(FrameType, FrameStorage):
     """
     STREAMS_BLOCKED Frame {
       Type (i) = 0x16..0x17,
       Maximum Streams (i),
     }
     """
-    fields_desc = MaxStreamsFrame.fields_desc.copy()
+    FRAME_TYPES = (0x16, 0x17)
+    fields_desc = MaxStreamsFrame.fields_with_type(FRAME_TYPES[0])
 
 
-class NewConnectionIdFrame(FrameStorage):
+class NewConnectionIdFrame(FrameType, FrameStorage):
     """
     NEW_CONNECTION_ID Frame {
       Type (i) = 0x18,
@@ -299,7 +324,8 @@ class NewConnectionIdFrame(FrameStorage):
       Stateless Reset Token (128),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
+    FRAME_TYPES = (0x18,)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         QuicVarLenField("sequence_number", None),
         QuicVarLenField("retire_prior_to", None),
         BitFieldLenField(
@@ -315,41 +341,44 @@ class NewConnectionIdFrame(FrameStorage):
     ]
 
 
-class RetireConnectionIdFrame(FrameStorage):
+class RetireConnectionIdFrame(FrameType, FrameStorage):
     """
     RETIRE_CONNECTION_ID Frame {
       Type (i) = 0x19,
       Sequence Number (i),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
+    FRAME_TYPES = (0x19,)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         QuicVarLenField("sequence_number", None),
     ]
 
 
-class PathChallengeFrame(FrameStorage):
+class PathChallengeFrame(FrameType, FrameStorage):
     """
     PATH_CHALLENGE Frame {
       Type (i) = 0x1a,
       Data (64),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
+    FRAME_TYPES = (0x1a,)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         XStrFixedLenField("data", None, 8),
     ]
 
 
-class PathResponseFrame(FrameStorage):
+class PathResponseFrame(FrameType, FrameStorage):
     """
     PATH_RESPONSE Frame {
       Type (i) = 0x1b,
       Data (64),
     }
     """
-    fields_desc = PathChallengeFrame.fields_desc.copy()
+    FRAME_TYPES = (0x1b,)
+    fields_desc = PathChallengeFrame.fields_with_type(FRAME_TYPES[0])
 
 
-class ConnectionCloseFrame(FrameStorage):
+class ConnectionCloseFrame(FrameType, FrameStorage):
     """
     CONNECTION_CLOSE Frame {
       Type (i) = 0x1c..0x1d,
@@ -359,7 +388,8 @@ class ConnectionCloseFrame(FrameStorage):
       Reason Phrase (..),
     }
     """
-    fields_desc = FrameType.fields_desc.copy() + [
+    FRAME_TYPES = (0x1c, 0x1d)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0]) + [
         QuicVarLenField("error_code", None),
         ConditionalField(
             QuicVarLenField("error_frame_type", None),
@@ -373,34 +403,35 @@ class ConnectionCloseFrame(FrameStorage):
     ]
 
 
-class HandshakeDoneFrame(FrameStorage):
+class HandshakeDoneFrame(FrameType, FrameStorage):
     """
     HANDSHAKE_DONE Frame {
       Type (i) = 0x1e,
     }
     """
-    fields_desc = FrameType.fields_desc.copy()
+    FRAME_TYPES = (0x1e,)
+    fields_desc = FrameType.fields_with_type(FRAME_TYPES[0])
 
 
-QUIC_FRAME_TYPES = {
-    0x00: PaddingFrame,
-    0x01: PingFrame,
-    **{i: AckFrame for i in range(0x02, 0x03 + 1)},
-    0x04: ResetStreamFrame,
-    0x05: StopSendingFrame,
-    0x06: CryptoFrame,
-    0x07: NewTokenFrame,
-    **{i: StreamFrame for i in range(0x8, 0x0f + 1)},
-    0x10: MaxDataFrame,
-    0x11: MaxStreamDataFrame,
-    **{i: MaxStreamsFrame for i in range(0x12, 0x13 + 1)},
-    0x14: DataBlockedFrame,
-    0x15: StreamDataBlockedFrame,
-    **{i: StreamsBlockedFrame for i in range(0x16, 0x17 + 1)},
-    0x18: NewConnectionIdFrame,
-    0x19: RetireConnectionIdFrame,
-    0x1a: PathChallengeFrame,
-    0x1b: PathResponseFrame,
-    **{i: ConnectionCloseFrame for i in range(0x1c, 0x1d + 1)},
-    0x1e: HandshakeDoneFrame,
-}
+QUIC_FRAME_TYPES = {frame_type: cls for cls in (
+    PaddingFrame,
+    PingFrame,
+    AckFrame,
+    ResetStreamFrame,
+    StopSendingFrame,
+    CryptoFrame,
+    NewTokenFrame,
+    StreamFrame,
+    MaxDataFrame,
+    MaxStreamDataFrame,
+    MaxStreamsFrame,
+    DataBlockedFrame,
+    StreamDataBlockedFrame,
+    StreamsBlockedFrame,
+    NewConnectionIdFrame,
+    RetireConnectionIdFrame,
+    PathChallengeFrame,
+    PathResponseFrame,
+    ConnectionCloseFrame,
+    HandshakeDoneFrame,
+) for frame_type in cls.FRAME_TYPES}
