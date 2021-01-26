@@ -305,7 +305,7 @@ class NewConnectionIdFrame(FrameStorage):
         BitFieldLenField(
             "connection_id_length", None,
             8, length_of="connection_id",
-        ), # unsigned int of 8 bits long ?
+        ),
         XStrLenField(
             "connection_id",
             b"", max_length=20,
